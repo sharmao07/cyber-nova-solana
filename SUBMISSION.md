@@ -68,11 +68,17 @@ From this vision, **CYBER NOVA: Sol-Runner Odyssey** was born — a 100% origina
 
 ---
 
+### **Project Links**
+- 🔗 **Live Production App:** [https://solarena-nine.vercel.app](https://solarena-nine.vercel.app)
+- 📦 **GitHub Repository:** [https://github.com/sharmao07/cyber-nova-solana](https://github.com/sharmao07/cyber-nova-solana)
+
+---
+
 ### **Verified On-Chain Devnet Proof**
 - **Speedrun Attestation Tx Hash:** `mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT`
 - **Second Verified Run Tx Hash:** `UkcKEXc4jMsHB9t2q5YDfxy3xjy3jCKg5Qsd71ERjLucKcBqiAvdFa36ePAvS49bMpWWXdY51nxkZA942eYy3Yg`
 - **Explorer Link:** [View on Solana Explorer (Devnet)](https://explorer.solana.com/tx/mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT?cluster=devnet)
-- **Funded Treasury Wallet:** `AQhLYu2J81QJs1YaSAEkc9jpWk4Ez16f1svEcsvoox4P` (~8.85+ SOL)
+- **Funded Treasury Wallet:** `AQhLYu2J81QJs1YaSAEkc9jpWk4Ez16f1svEcsvoox4P` (~8.80+ SOL)
 
 ---
 

@@ -2,10 +2,15 @@
 > **A high-speed, 60 FPS retro cyber-platformer powered natively by Solana Devnet, autonomous AI agents, in-game DeFi yield reactors, and on-chain speedrun attestations.**  
 > *Inspired by classic 2D platformers, built with 100% original IP, characters, and assets for the MLH Solana Hackathon (November 2026).*
 
-[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-14F195?logo=solana&logoColor=black)](https://solscan.io?cluster=devnet)
+[![Live on Vercel](https://img.shields.io/badge/Live_App-Vercel-black?logo=vercel&logoColor=white)](https://solarena-nine.vercel.app)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-sharmao07%2Fcyber--nova--solana-181717?logo=github&logoColor=white)](https://github.com/sharmao07/cyber-nova-solana)
+[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-14F195?logo=solana&logoColor=black)](https://explorer.solana.com/?cluster=devnet)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+
+🔗 **Live Production Site:** [https://solarena-nine.vercel.app](https://solarena-nine.vercel.app)  
+📦 **Source Code Repository:** [https://github.com/sharmao07/cyber-nova-solana](https://github.com/sharmao07/cyber-nova-solana)
 
 ---
 
