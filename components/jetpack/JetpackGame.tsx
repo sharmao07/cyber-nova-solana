@@ -20,12 +20,14 @@ import {
   drawObstacle, 
   drawShardCollectible, 
   drawVehicleToken, 
-  drawSpeedGate,
+  drawSpeedGate, 
   drawLabScientistNPC, 
   drawFacilityBackground, 
+  drawAiTacticalOverlay,
+  drawMissionHudOverlay,
   CANVAS_WIDTH, 
   CANVAS_HEIGHT, 
-  FLOOR_Y,
+  FLOOR_Y, 
   CEILING_Y 
 } from '@/lib/jetpack/sprites';
 import { updateJetpackPhysics, resetJetpackSpawnState } from '@/lib/jetpack/physics';
@@ -62,6 +64,8 @@ interface JetpackGameProps {
   stakingPerks: StakingPerks;
   activeSkin: SkinType;
   onTxConfirmed?: (sig: string) => void;
+  activeWager?: { amount: number; targetMeters: number; potentialPayout: number; signature: string } | null;
+  onWagerWon?: (payoutSol: number) => void;
 }
 
 export default function JetpackGame({
@@ -69,6 +73,8 @@ export default function JetpackGame({
   stakingPerks,
   activeSkin,
   onTxConfirmed,
+  activeWager,
+  onWagerWon,
 }: JetpackGameProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -87,6 +93,34 @@ export default function JetpackGame({
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isThrustActive, setIsThrustActive] = useState<boolean>(false);
   const [milestoneBanner, setMilestoneBanner] = useState<string | null>(null);
+  const [wagerClaimed, setWagerClaimed] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => sounds.isMuted);
+
+  const handleToggleSound = () => {
+    const nextMuted = sounds.toggleMute();
+    setIsMuted(nextMuted);
+    if (!nextMuted) sounds.playJump(false);
+  };
+
+  const startThrust = useCallback((e?: React.SyntheticEvent) => {
+    if (e && e.cancelable && e.type.startsWith('touch')) {
+      e.preventDefault();
+    }
+    const gs = gameStateRef.current;
+    gs.touchPointerDown = true;
+    setIsThrustActive(true);
+
+    // Gravity Drifter inversion on tap/click
+    if (gs.player.vehicle === 'gravity_drifter') {
+      gs.player.gravityInverted = !gs.player.gravityInverted;
+      sounds.playJump(false);
+    }
+  }, []);
+
+  const stopThrust = useCallback(() => {
+    gameStateRef.current.touchPointerDown = false;
+    setIsThrustActive(false);
+  }, []);
 
   // Modals & Attestation
   const [showCrashModal, setShowCrashModal] = useState<boolean>(false);
@@ -191,6 +225,7 @@ export default function JetpackGame({
     setScore(0);
     setCombo(0);
     setIsWarping(false);
+    setWagerClaimed(false);
   }, [activeSkin, stakingPerks, difficulty]);
 
   // Clean Modal Close Handler (Fixes: Click Close Nothing Happens)
@@ -306,6 +341,30 @@ export default function JetpackGame({
         setBestDistance(curDistance);
       }
 
+      // Check if active escrow wager milestone unlocked!
+      if (activeWager && !wagerClaimed && curDistance >= activeWager.targetMeters) {
+        setWagerClaimed(true);
+        sounds.play1Up();
+        confetti({
+          particleCount: 90,
+          spread: 75,
+          origin: { y: 0.5 },
+          colors: ['#F59E0B', '#14F195', '#38BDF8'],
+        });
+        gs.scorePopups.push({
+          id: `wager_win_${Date.now()}`,
+          text: `🏆 BOUNTY CLAIMED! +${activeWager.potentialPayout.toFixed(3)} SOL`,
+          x: gs.player.x + 20,
+          y: gs.player.y - 30,
+          vy: -2,
+          opacity: 1,
+          color: '#F59E0B',
+        });
+        if (onWagerWon) {
+          onWagerWon(activeWager.potentialPayout);
+        }
+      }
+
       // Crash / Run Over
       if (out.playerCrashed) {
         setRunSummary({
@@ -385,6 +444,21 @@ export default function JetpackGame({
 
     // 8. Draw Player (Nova or Vehicle)
     drawJetpackPlayer(ctx, gs.player, gs.globalFrame);
+
+    // 8.5 Draw A.R.I.A. Autonomous AI Holographic Overlay if active
+    if (isAiAutopilot) {
+      drawAiTacticalOverlay(ctx, gs.player, gs.obstacles, aiTelemetry, gs.globalFrame);
+    }
+
+    // 8.6 Draw Active Mission, DeFi Wager & Staking Perks Canvas HUD
+    drawMissionHudOverlay(
+      ctx,
+      Math.round(gs.player.distance),
+      activeWager && !wagerClaimed ? activeWager : null,
+      stakingPerks,
+      gs.player.shields,
+      gs.globalFrame
+    );
 
     // 9. Draw Score Popups
     for (const sp of gs.scorePopups) {
@@ -520,15 +594,39 @@ export default function JetpackGame({
               <span className="text-[9px] text-zinc-500">1.8x</span>
             </button>
           </div>
+
+          {/* Audio Mute/Unmute & Active Wager Indicator */}
+          <div className="flex items-center gap-2">
+            {activeWager && !wagerClaimed && (
+              <div className="hidden sm:flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/40 px-2.5 py-1 rounded-lg text-[11px] text-amber-300 animate-pulse">
+                <Flame className="w-3.5 h-3.5 text-amber-400" />
+                <span>Bounty: {activeWager.targetMeters}m (+{activeWager.potentialPayout.toFixed(3)} SOL)</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleToggleSound}
+              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+              className={`p-1.5 rounded-lg border transition ${
+                isMuted 
+                  ? 'bg-zinc-800 border-zinc-700 text-zinc-500' 
+                  : 'bg-cyan-950/60 border-cyan-700/60 text-cyan-300 hover:bg-cyan-900/60'
+              }`}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
 
         {/* Canvas Flight Area with CRT Scanlines & Interactive Touch Support */}
         <div 
           className="relative w-full aspect-[800/480] bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-inner select-none cursor-pointer"
-          onMouseDown={() => { gameStateRef.current.touchPointerDown = true; }}
-          onMouseUp={() => { gameStateRef.current.touchPointerDown = false; }}
-          onTouchStart={(e) => { e.preventDefault(); gameStateRef.current.touchPointerDown = true; }}
-          onTouchEnd={(e) => { e.preventDefault(); gameStateRef.current.touchPointerDown = false; }}
+          onMouseDown={startThrust}
+          onMouseUp={stopThrust}
+          onMouseLeave={stopThrust}
+          onTouchStart={startThrust}
+          onTouchEnd={stopThrust}
+          onTouchCancel={stopThrust}
         >
           <canvas
             ref={canvasRef}

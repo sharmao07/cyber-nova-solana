@@ -46,6 +46,7 @@ From this vision, **CYBER NOVA: Sol-Jet Velocity** was born — a 100% original 
 
 2. **A.R.I.A. — Autonomous Runner Intelligence Agent (AI Track Top Prize):**
    - Toggle **AI Copilot** at any moment to hand controls over to A.R.I.A., an autonomous AI agent with real-time 320px hazard lookahead, corridor trajectory evaluation, and missile evasion.
+   - **Holographic Tactical AI HUD on Canvas:** Renders a futuristic radar sweep corridor, predictive trajectory curve to target altitude waypoints, and holographic threat brackets (`[ ⚠️ MISSILE LOCK ]` and `[ ⚡ HAZARD GAP ]`) with live neural confidence telemetry.
    - A.R.I.A. holds its **own ed25519 Solana Devnet keypair** and signs its own distance records directly to Devnet, paying its own gas fees!
    - Features the **AI Hazard & Flight Architect**, allowing players to synthesize custom procedural facility waves from natural-language prompts.
    - Includes conversational **A.R.I.A. NLP Terminal** for natural language on-chain transactions and game mechanics queries.
@@ -86,6 +87,7 @@ From this vision, **CYBER NOVA: Sol-Jet Velocity** was born — a 100% original 
 ---
 
 ### **Verified On-Chain Devnet Proof**
+- **Latest Attestation Proof Tx:** `QWEzr3gGB1wrvLr1RR97NVojh9MtX3ZRhzrjywVZzjYXxQ9Lc2Yx3q1j51xoGUur2gbRFnoRmhXCtmdy3YczRWV`
 - **Recent Attestation Run Tx:** `2chXRypagS7Kky2CXNv2sQRN84uZ6HEfZAqpBdxVPfS6rdhtxGxR6wqANhLuBiCiojmcaKJmfM5e2WSWcAurGYgi`
 - **Distance Attestation Tx Hash:** `mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT`
 - **Second Verified Run Tx Hash:** `UkcKEXc4jMsHB9t2q5YDfxy3xjy3jCKg5Qsd71ERjLucKcBqiAvdFa36ePAvS49bMpWWXdY51nxkZA942eYy3Yg`

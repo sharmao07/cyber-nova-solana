@@ -16,7 +16,8 @@ import {
 
 interface WagerEscrowProps {
   solBalance: number;
-  onWagerLocked: (wagerSol: number) => void;
+  onWagerLocked: (wagerSol: number, targetMeters: number, payoutSol: number, sig: string) => void;
+  onLaunchFlight?: () => void;
   onTxConfirmed?: (sig: string) => void;
 }
 
@@ -29,6 +30,7 @@ const DISTANCE_TIERS = [
 export default function WagerEscrow({
   solBalance,
   onWagerLocked,
+  onLaunchFlight,
   onTxConfirmed,
 }: WagerEscrowProps) {
   const [selectedWager, setSelectedWager] = useState<number>(0.05);
@@ -52,7 +54,8 @@ export default function WagerEscrow({
         tier: selectedTier,
         signature: sig,
       });
-      onWagerLocked(selectedWager);
+      const targetMeters = parseInt(selectedTier.replace('m', '')) || 1500;
+      onWagerLocked(selectedWager, targetMeters, potentialPayout, sig);
       if (onTxConfirmed) onTxConfirmed(sig);
       sounds.playPowerup();
     } catch (err) {
@@ -166,15 +169,27 @@ export default function WagerEscrow({
           <p className="text-[11px] text-zinc-400">
             Reach {activeWager.tier} in your next flight to claim {(activeWager.amount * activeTierObj.multiplier).toFixed(3)} SOL!
           </p>
-          <a
-            href={`https://solscan.io/tx/${activeWager.signature}?cluster=devnet`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:underline pt-0.5"
-          >
-            <span>View Escrow Deposit on Solscan</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex items-center justify-between pt-1">
+            <a
+              href={`https://solscan.io/tx/${activeWager.signature}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:underline"
+            >
+              <span>View Escrow on Solscan</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+
+            {onLaunchFlight && (
+              <button
+                onClick={onLaunchFlight}
+                className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-lg text-[10px] transition flex items-center gap-1 shadow-sm"
+              >
+                <Rocket className="w-3 h-3" />
+                <span>Launch Flight Arcade</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

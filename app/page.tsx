@@ -50,6 +50,29 @@ export default function Home() {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState<boolean>(false);
   const [isDeployGuideOpen, setIsDeployGuideOpen] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<SolanaTransactionRecord[]>([]);
+  const [activeWager, setActiveWager] = useState<{
+    amount: number;
+    targetMeters: number;
+    potentialPayout: number;
+    signature: string;
+  } | null>(null);
+
+  const handleWagerLocked = (wagerSol: number, targetMeters: number, payoutSol: number, sig: string) => {
+    setSolBalance(s => s - wagerSol);
+    setActiveWager({
+      amount: wagerSol,
+      targetMeters,
+      potentialPayout: payoutSol,
+      signature: sig,
+    });
+    // Auto-switch to PLAY tab so player immediately enters the flight arcade!
+    setActiveTab('PLAY');
+  };
+
+  const handleWagerWon = (payoutSol: number) => {
+    setSolBalance(s => s + payoutSol);
+    setActiveWager(null);
+  };
 
   useEffect(() => {
     setTransactions(getStoredTransactions());
@@ -159,6 +182,8 @@ export default function Home() {
             stakingPerks={stakingPerks}
             activeSkin={activeSkin}
             onTxConfirmed={() => setTransactions(getStoredTransactions())}
+            activeWager={activeWager}
+            onWagerWon={handleWagerWon}
           />
         )}
 
@@ -228,7 +253,8 @@ export default function Home() {
             {defiSubTab === 'WAGER' && (
               <WagerEscrow
                 solBalance={solBalance}
-                onWagerLocked={wager => setSolBalance(s => s - wager)}
+                onWagerLocked={handleWagerLocked}
+                onLaunchFlight={() => setActiveTab('PLAY')}
                 onTxConfirmed={() => setTransactions(getStoredTransactions())}
               />
             )}

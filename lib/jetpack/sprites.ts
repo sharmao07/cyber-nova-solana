@@ -771,3 +771,193 @@ export function drawFacilityBackground(
     ctx.stroke();
   }
 }
+
+/**
+ * A.R.I.A. Autonomous AI Holographic Tactical HUD Overlay
+ * Visually displays the autonomous agent's real-time lookahead corridor,
+ * predictive trajectory curve, target altitude waypoint, and hazard lock brackets.
+ */
+export function drawAiTacticalOverlay(
+  ctx: CanvasRenderingContext2D,
+  player: JetpackPlayer,
+  obstacles: Obstacle[],
+  telemetry: { action: string; confidence: number; reason: string; targetY?: number } | null,
+  globalFrame: number
+) {
+  if (!telemetry) return;
+  ctx.save();
+
+  const px = player.x + player.w / 2;
+  const py = player.y + player.h / 2;
+  const targetY = telemetry.targetY ?? py;
+
+  // 1. Radar Scan Sweep Corridor ahead of player
+  const scanWidth = 300;
+  const sweepProgress = (globalFrame * 4) % scanWidth;
+  const sweepX = px + sweepProgress;
+
+  const grad = ctx.createLinearGradient(sweepX - 30, 0, sweepX, 0);
+  grad.addColorStop(0, 'rgba(0, 255, 255, 0)');
+  grad.addColorStop(1, 'rgba(0, 255, 255, 0.08)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(px, CEILING_Y, sweepX - px, FLOOR_Y - CEILING_Y);
+
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(sweepX, CEILING_Y);
+  ctx.lineTo(sweepX, FLOOR_Y);
+  ctx.stroke();
+
+  // 2. Predictive Trajectory Bezier Spline
+  ctx.save();
+  ctx.strokeStyle = 'rgba(20, 241, 149, 0.85)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px + 12, py);
+  ctx.quadraticCurveTo(px + 60, py, px + 140, targetY);
+  ctx.stroke();
+
+  // Target Waypoint Crosshair at (px + 140, targetY)
+  ctx.setLineDash([]);
+  ctx.strokeStyle = '#14F195';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(px + 140, targetY, 6, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#14F195';
+  ctx.fillRect(px + 137, targetY - 1, 6, 2);
+  ctx.fillRect(px + 139, targetY - 3, 2, 6);
+  ctx.restore();
+
+  // 3. Threat Detection Holographic Corner Brackets
+  for (const obs of obstacles) {
+    if (!obs.active || obs.x < player.x - 20 || obs.x > player.x + 300) continue;
+    ctx.save();
+    const isMissile = obs.type === 'seeker_missile';
+    ctx.strokeStyle = isMissile ? 'rgba(239, 68, 68, 0.9)' : 'rgba(0, 255, 255, 0.75)';
+    ctx.lineWidth = 1.5;
+    const bX = Math.round(obs.x) - 4;
+    const bY = Math.round(obs.y) - 4;
+    const bW = Math.round(obs.w) + 8;
+    const bH = Math.round(obs.h) + 8;
+
+    const cL = 6;
+    ctx.beginPath();
+    ctx.moveTo(bX, bY + cL); ctx.lineTo(bX, bY); ctx.lineTo(bX + cL, bY);
+    ctx.moveTo(bX + bW - cL, bY); ctx.lineTo(bX + bW, bY); ctx.lineTo(bX + bW, bY + cL);
+    ctx.moveTo(bX, bY + bH - cL); ctx.lineTo(bX, bY + bH); ctx.lineTo(bX + cL, bY + bH);
+    ctx.moveTo(bX + bW - cL, bY + bH); ctx.lineTo(bX + bW, bY + bH); ctx.lineTo(bX + bW, bY + bH - cL);
+    ctx.stroke();
+
+    ctx.fillStyle = isMissile ? '#EF4444' : '#00FFFF';
+    ctx.font = 'bold 9px monospace';
+    ctx.fillText(isMissile ? '⚠️ MISSILE LOCK' : '⚡ HAZARD GAP', bX, bY - 6);
+    ctx.restore();
+  }
+
+  // 4. Futuristic Tactical Status Pill in Canvas Corner
+  ctx.save();
+  ctx.fillStyle = 'rgba(10, 10, 16, 0.88)';
+  ctx.strokeStyle = 'rgba(0, 255, 255, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(16, 12, 340, 24, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // Blinking AI indicator dot
+  const pulse = (globalFrame % 30) < 15;
+  ctx.fillStyle = pulse ? '#14F195' : '#047857';
+  ctx.beginPath();
+  ctx.arc(26, 24, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.font = 'bold 9px monospace';
+  ctx.fillStyle = '#00FFFF';
+  ctx.fillText('A.R.I.A. NEURAL COPILOT', 36, 27);
+
+  ctx.fillStyle = '#71717A';
+  ctx.fillText('|', 160, 27);
+
+  ctx.fillStyle = telemetry.action.includes('EVADE') ? '#EF4444' : '#E4E4E7';
+  ctx.fillText(`${telemetry.action.slice(0, 18)}`, 168, 27);
+
+  ctx.fillStyle = '#14F195';
+  ctx.fillText(`${Math.round(telemetry.confidence * 100)}%`, 318, 27);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * Renders In-Flight Mission & DeFi Wager Objective Overlays directly onto the canvas
+ */
+export function drawMissionHudOverlay(
+  ctx: CanvasRenderingContext2D,
+  distance: number,
+  activeWager: { amount: number; targetMeters: number; potentialPayout: number } | null,
+  stakingPerks: { shardBonusPercent: number; superJump: boolean; shardMagnet: boolean },
+  shields: number,
+  globalFrame: number
+) {
+  ctx.save();
+
+  // 1. Active DeFi Escrow Wager Card (Top-Right Canvas Overlay)
+  if (activeWager) {
+    const isCompleted = distance >= activeWager.targetMeters;
+    const progress = Math.min(100, Math.round((distance / activeWager.targetMeters) * 100));
+
+    ctx.save();
+    ctx.fillStyle = isCompleted ? 'rgba(5, 46, 22, 0.92)' : 'rgba(24, 18, 5, 0.9)';
+    ctx.strokeStyle = isCompleted ? '#14F195' : '#F59E0B';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(CANVAS_WIDTH - 240, 12, 224, 28, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = isCompleted ? '#14F195' : '#FBBF24';
+    ctx.fillText(
+      isCompleted 
+        ? `🏆 BOUNTY UNLOCKED: +${activeWager.potentialPayout.toFixed(3)} SOL`
+        : `🎯 WAGER: ${distance}m / ${activeWager.targetMeters}m (${progress}%)`,
+      CANVAS_WIDTH - 232,
+      25
+    );
+
+    // Mini Progress Bar
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fillRect(CANVAS_WIDTH - 232, 30, 208, 4);
+    ctx.fillStyle = isCompleted ? '#14F195' : '#F59E0B';
+    ctx.fillRect(CANVAS_WIDTH - 232, 30, (208 * progress) / 100, 4);
+
+    ctx.restore();
+  }
+
+  // 2. Staking Perks Indicators (Top-Center / Bottom-Left)
+  const perksList: string[] = [];
+  if (shields > 0) perksList.push(`🛡️ SHIELD (${shields})`);
+  if (stakingPerks.shardMagnet) perksList.push('🧲 MAGNET');
+  if (stakingPerks.shardBonusPercent > 0) perksList.push(`⚡ +${stakingPerks.shardBonusPercent}% SHARDS`);
+
+  if (perksList.length > 0) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(16, FLOOR_Y + 12, 280, 20, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = '#38BDF8';
+    ctx.fillText(perksList.join(' • '), 24, FLOOR_Y + 26);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}

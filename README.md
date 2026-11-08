@@ -65,6 +65,7 @@ CYBER NOVA was engineered from the ground up to **legitimately qualify for and e
 
 ### 2. AI Track Top Prize ($100 USD Digital Giftcard)
 * **Autonomous AI Copilot ("A.R.I.A."):** Toggle the **"AI Copilot"** switch to watch an autonomous agent pilot Nova at 60 FPS. It evaluates a 320px threat corridor in real time, calculates clearance altitudes, anticipates missile trajectories, and navigates rotating zappers hands-free.
+* **Holographic Tactical AI HUD on Canvas:** Renders a futuristic radar sweep corridor, predictive trajectory spline toward target altitude waypoints, and holographic threat brackets (`[ ⚠️ MISSILE LOCK ]` and `[ ⚡ HAZARD GAP ]`) with live neural confidence telemetry directly on the game canvas.
 * **Autonomous Agent with Dedicated Solana Wallet:** A.R.I.A. holds its own ed25519 Solana keypair. When it achieves distance records, it **autonomously signs an on-chain verification transaction** on Solana Devnet (`AI_AGENT_AUTONOMOUS_CLEAR`), paying its own gas fees!
 * **AI Hazard & Flight Architect:** Synthesize custom procedural facility waves from natural language prompts (e.g., *"Dense rotating zappers, rapid-fire homing missiles, and lots of floating Solana Shards"*).
 * **A.R.I.A. NLP Terminal:** Conversational AI copilot that executes on-chain operations from plain English (*"Airdrop me 0.5 SOL"*, *"Swap 50 shards for SOL"*, *"Explain quantum zapper clearance"*).
@@ -73,11 +74,11 @@ CYBER NOVA was engineered from the ground up to **legitimately qualify for and e
 
 ### 3. DeFi Track Top Prize ($100 USD Digital Gift Card)
 * **Quantum Swap Constant Product AMM DEX ($x \cdot y = k$):** An in-game automated market maker pool between in-game earned `$SHARD` and real Devnet `$SOL`. Players who collect shards during flight can swap them directly for SOL with 0.3% LP fees and dynamic slippage control.
-* **Solar Staking Reactor (18.5% APY):** Stake SOL to earn streaming yield and unlock active flight perks:
+* **Solar Staking Reactor (18.5% APY):** Stake SOL to earn streaming yield and unlock active flight perks reflected live on your canvas HUD:
   - *Bronze (≥0.05 SOL):* +15% Shard Yield Multiplier
   - *Silver (≥0.10 SOL):* Kinetic Energy Shield (absorbs 1 fatal hit!)
   - *Gold (≥0.25 SOL):* Shard Magnetism (vacuums all shards within 180px!)
-* **Distance Wager Escrow:** Wager 0.05, 0.1, or 0.25 SOL into a decentralized escrow contract. Reach your target flight distance (800m, 1,500m, or 2,500m) to win up to a 2.2x bounty payout!
+* **Distance Wager Escrow:** Wager 0.05, 0.1, or 0.25 SOL into a decentralized escrow contract. Reach your target flight distance (800m, 1,500m, or 2,500m) to unlock an instant 2.2x bounty payout with in-flight objective tracking!
 
 ---
 
@@ -117,7 +118,8 @@ All features interact with the live Solana Devnet cluster. Here are verified tra
 
 | Type | Signature | Solscan Link |
 | :--- | :--- | :--- |
-| **Recent Attestation Run** | `2chXRypa...` | [View on Solscan](https://solscan.io/tx/2chXRypagS7Kky2CXNv2sQRN84uZ6HEfZAqpBdxVPfS6rdhtxGxR6wqANhLuBiCiojmcaKJmfM5e2WSWcAurGYgi?cluster=devnet) |
+| **Latest Attestation Proof** | `QWEzr3gG...` | [View on Solscan](https://solscan.io/tx/QWEzr3gGB1wrvLr1RR97NVojh9MtX3ZRhzrjywVZzjYXxQ9Lc2Yx3q1j51xoGUur2gbRFnoRmhXCtmdy3YczRWV?cluster=devnet) |
+| **Flight Distance Attestation** | `2chXRypa...` | [View on Solscan](https://solscan.io/tx/2chXRypagS7Kky2CXNv2sQRN84uZ6HEfZAqpBdxVPfS6rdhtxGxR6wqANhLuBiCiojmcaKJmfM5e2WSWcAurGYgi?cluster=devnet) |
 | **Distance Run Attestation** | `mJzf3VR2...` | [View on Solscan](https://solscan.io/tx/mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT?cluster=devnet) |
 | **A.R.I.A. Autonomous AI Attestation** | `UkcKEXc4...` | [View on Solscan](https://solscan.io/tx/UkcKEXc4jMsHB9t2q5YDfxy3xjy3jCKg5Qsd71ERjLucKcBqiAvdFa36ePAvS49bMpWWXdY51nxkZA942eYy3Yg?cluster=devnet) |
 | **Faucet Devnet Distribution** | `2k8Mr8Wu...` | [View on Solscan](https://solscan.io/tx/2k8Mr8WuwdMmxYqcyC9d9jFPXxuFZ2Nux1NKWHYjwRLQffCxak9wppouoaRwmL8Gzwkcz14z76627WFGBsEtMsqp?cluster=devnet) |

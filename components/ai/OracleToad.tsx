@@ -72,17 +72,21 @@ export default function OracleToad({
         action = 'SWAP';
         onSwapSuggested();
       } else if (lower.includes('stake') || lower.includes('yield') || lower.includes('reactor') || lower.includes('farm')) {
-        reply = '🌱 Solar Staking Reactor online: Earn 18.5% streaming APY while unlocking in-game Super Mag-Jump and Shard Magnetism!';
+        reply = '🌱 Solar Staking Reactor online: Earn 18.5% streaming APY while unlocking in-game Kinetic Energy Shields and Shard Magnetism!';
         action = 'STAKE';
         onStakeSuggested();
-      } else if (lower.includes('titan') || lower.includes('macro') || lower.includes('boss') || lower.includes('1-4') || lower.includes('citadel')) {
-        reply = '🏰 Tactical Advisory for Sector 1-4: The Macro-Titan leaps periodically across the magnetic flux bridge. Time your mag-sprint to run underneath or jump across the upper carbon ledge to strike the Golden Core Fuse, overloading the bridge and dropping the titan into the plasma abyss!';
+      } else if (lower.includes('missile') || lower.includes('seeker') || lower.includes('homing') || lower.includes('dodge')) {
+        reply = '🚀 Homing Missile Evasion Protocol: When the red [ ! ] siren tracking alarm sounds, Nova has 36-75 frames to shift altitude. Wait for the alarm to lock, then tap thrust or cut engines to glide out of its flight corridor!';
+      } else if (lower.includes('zapper') || lower.includes('laser') || lower.includes('hazard')) {
+        reply = '⚡ Quantum Zapper Clearance: Rotating and diagonal zappers feature a dynamic clearance window. Gauge the gap above versus below—if gap > 90px, feather your thrusters to glide through the upper sector safely.';
+      } else if (lower.includes('vehicle') || lower.includes('drifter') || lower.includes('mech') || lower.includes('cycle')) {
+        reply = '🏎️ Experimental Cyber Vehicles: 1) Gravity Drifter inverts gravity on tap, 2) Mech Breaker stomps with heavy hydraulic jumps, 3) Warp Cycle blazes at 1.4x cruise speed. All vehicles feature Eject-Armor that absorbs 1 fatal hit!';
       } else if (lower.includes('ai') || lower.includes('autopilot') || lower.includes('autonomous') || lower.includes('aria')) {
-        reply = '🤖 Toggle "AI Copilot" on the top toolbar! I will actively evaluate terrain obstacles, compute jump physics vectors, evade FUD-bots, and autonomously sign speedrun attestations to Solana Devnet with my own ed25519 keypair.';
+        reply = '🤖 Toggle "AI Copilot" on the top toolbar! I will actively evaluate terrain obstacles, compute jump physics vectors, evade hazards, and autonomously sign speedrun attestations to Solana Devnet with my own ed25519 keypair.';
       } else if (lower.includes('track') || lower.includes('hackathon') || lower.includes('mlh')) {
         reply = '🏆 Cyber Nova qualifies for all 5 MLH tracks: 1. Gaming (Original 60fps platformer + verified state), 2. AI (Autonomous Agent with wallet + natural language AI), 3. DeFi (AMM swap + yield staking + wager escrow), 4. Beginner (1-click burner wallet + funded faucet + ELI5 inspector), 5. Top 3 Overall (sub-second speed & true composability).';
       } else {
-        reply = `✨ A.R.I.A. telemetry parsed query: "${userText}". Try asking to "Airdrop SOL", "Swap shards", "Overload Macro-Titan", or "Explain staking perks"!`;
+        reply = `✨ A.R.I.A. telemetry parsed query: "${userText}". Try asking to "Airdrop SOL", "Swap shards", "Evade missiles", or "Explain staking perks"!`;
       }
 
       setMessages(prev => [
@@ -166,16 +170,22 @@ export default function OracleToad({
           ⚡ Airdrop 0.5 SOL
         </button>
         <button
-          onClick={() => setInput('How do I defeat the Macro-Titan?')}
+          onClick={() => setInput('How do I evade homing missiles?')}
           className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2.5 py-1 rounded-lg text-[10px] text-zinc-300 whitespace-nowrap transition"
         >
-          🏰 Overload Macro-Titan
+          🚀 Evade Missiles
         </button>
         <button
-          onClick={() => setInput('Swap 25 shards for SOL')}
+          onClick={() => setInput('Swap 50 shards for SOL')}
           className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2.5 py-1 rounded-lg text-[10px] text-zinc-300 whitespace-nowrap transition"
         >
           🔄 Swap Shards to SOL
+        </button>
+        <button
+          onClick={() => setInput('Explain cyber vehicles and eject armor')}
+          className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 px-2.5 py-1 rounded-lg text-[10px] text-zinc-300 whitespace-nowrap transition"
+        >
+          🏎️ Cyber Vehicles
         </button>
       </div>
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { executeVaultStake, executeVaultClaim } from '@/lib/solana/transactions';
 import { getOrCreateBurnerWallet } from '@/lib/solana/burner-wallet';
-import { StakingPerks } from '@/lib/mario/types';
+import { StakingPerks } from '@/lib/jetpack/types';
 import { sounds } from '@/lib/audio/sound-effects';
 import { 
   TrendingUp, 
