@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CYBER NOVA: Sol-Jet Velocity - Ending Screen</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    body {
+      background: #080A12;
+      color: #FFFFFF;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(20, 241, 149, 0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .glow-cyan {
+      position: absolute;
+      top: 25%;
+      left: 25%;
+      width: 700px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(20, 241, 149, 0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .container {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 1400px;
+      padding: 40px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 24px;
+      background: rgba(20, 241, 149, 0.12);
+      border: 1px solid rgba(20, 241, 149, 0.5);
+      border-radius: 9999px;
+      color: #14F195;
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 68px;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+      text-shadow: 0 0 35px rgba(0, 255, 255, 0.5);
+    }
+    h1 span.nova {
+      color: #00FFFF;
+      text-shadow: 0 0 45px rgba(0, 255, 255, 0.8);
+    }
+    .links-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto 36px;
+    }
+    .link-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 18px 28px;
+      border-radius: 14px;
+    }
+    .link-label {
+      font-size: 16px;
+      color: #94A3B8;
+      font-weight: 700;
+    }
+    .link-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: #38BDF8;
+    }
+    .tracks-row {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .track-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #F1F5F9;
+    }
+    .footer-note {
+      font-size: 15px;
+      color: #64748B;
+    }
+    .label-tag {
+      position: absolute;
+      bottom: 24px;
+      left: 36px;
+      color: #14F195;
+      font-size: 14px;
+      font-weight: 700;
+      background: rgba(20, 241, 149, 0.08);
+      border: 1px solid rgba(20, 241, 149, 0.3);
+      padding: 6px 16px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow-cyan"></div>
+
+  <div class="container">
+    <div class="badge">
+      🏆 SUBMISSION READY • MLH SOLANA HACKATHON
+    </div>
+
+    <h1>CYBER <span class="nova">NOVA</span>: Sol-Jet Velocity</h1>
+
+    <div class="links-box">
+      <div class="link-row">
+        <span class="link-label">🌐 Live Production Deployment</span>
+        <span class="link-val">https://solarena-nine.vercel.app</span>
+      </div>
+      <div class="link-row">
+        <span class="link-label">📦 Open Source GitHub Repository</span>
+        <span class="link-val">https://github.com/sharmao07/cyber-nova-solana</span>
+      </div>
+    </div>
+
+    <div class="tracks-row">
+      <div class="track-pill">🏆 Top 3 Overall ($1,000)</div>
+      <div class="track-pill">🤖 AI Track ($100)</div>
+      <div class="track-pill">💰 DeFi Track ($100)</div>
+      <div class="track-pill">🎮 Gaming Track ($100)</div>
+      <div class="track-pill">🐣 Beginner Hack ($100)</div>
+    </div>
+
+    <p class="footer-note">
+      Engineered with Next.js 16 • TypeScript • Tailwind 4 • @solana/web3.js • Pure Web Audio Synthesizer
+    </p>
+  </div>
+
+  <div class="label-tag">[ 08 / 08 • LIVE DEPLOYMENT & OPEN SOURCE CODEBASE ]</div>
+</body>
+</html>

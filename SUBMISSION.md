@@ -83,6 +83,8 @@ From this vision, **CYBER NOVA: Sol-Jet Velocity** was born — a 100% original 
 ### **Project Links**
 - 🔗 **Live Production App:** [https://solarena-nine.vercel.app](https://solarena-nine.vercel.app)
 - 📦 **GitHub Repository:** [https://github.com/sharmao07/cyber-nova-solana](https://github.com/sharmao07/cyber-nova-solana)
+- 🎬 **90-Second Demo Video (1080p 60 FPS):** `docs/submission/demo.mp4`
+- 🖼️ **Demo Video Thumbnail:** `docs/submission/thumbnail.png`
 
 ---
 

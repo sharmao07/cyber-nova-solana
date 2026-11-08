@@ -14,6 +14,27 @@
 
 ---
 
+## 🎬 90-Second Gameplay Demo Video (1080p 60 FPS)
+
+[![CYBER NOVA 90s Gameplay Demo](docs/submission/thumbnail.png)](docs/submission/demo.mp4)
+
+> 📹 **Local Video File:** [`docs/submission/demo.mp4`](docs/submission/demo.mp4) (Exact duration: **1m 30s**, 1920×1080, 60 FPS, H.264 + AAC Stereo)  
+> 🖼️ **Video Thumbnail:** [`docs/submission/thumbnail.png`](docs/submission/thumbnail.png)
+
+### ⏱️ Video Timeline Breakdown:
+| Timestamp | Segment Description |
+| :--- | :--- |
+| **0:00–0:07** | **Title Screen & System Briefing:** Official MLH Solana Hackathon submission intro & feature highlights. |
+| **0:07–0:15** | **Start Screen & Flight Guide:** Live Devnet TPS/slot indicators, difficulty toggles (Easy/Med/Hard), controls modal. |
+| **0:15–0:35** | **60 FPS Continuous Flight:** Photon jetpack thrust & glide mechanics, hazard corridors, collecting Solana shards. |
+| **0:35–0:50** | **Vehicles, Boosters & Eject-Armor:** Warp drive booster gate, Gravity Drifter inversion, kinetic shield absorbing fatal hit. |
+| **0:50–1:05** | **Apex Hard Mode & A.R.I.A. AI Copilot:** 6.8px/s speed, homing missile evasion dive, 300px holographic radar corridor & threat lock brackets. |
+| **1:05–1:17** | **Run Termination & Solana Attestation:** Crash modal, 1-click ed25519 cryptographic distance proof committed to Devnet via SPL Memo Program. |
+| **1:17–1:25** | **Quantum DeFi Ecosystem:** Constant-Product AMM Swap ($x \cdot y = k$), Solar Staking (18.5% APY), and On-Chain Leaderboard. |
+| **1:25–1:30** | **Ending Showcase:** Live deployment URL (`https://solarena-nine.vercel.app`) & GitHub repository link. |
+
+---
+
 ## 🎮 Gameplay Preview
 
 ![CYBER NOVA Gameplay Preview](public/screenshots/cyber-nova-preview.png)
