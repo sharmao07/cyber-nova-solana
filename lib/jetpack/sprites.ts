@@ -1,7 +1,7 @@
 // Procedural Pixel Art Sprites for CYBER NOVA: Sol-Jet Velocity
 // 100% Original Sci-Fi Endless Jetpack Runner Assets for Solana
 
-import { JetpackPlayer, Obstacle, ShardCollectible, VehicleTokenEntity, LabScientistNPC } from './types';
+import { JetpackPlayer, Obstacle, ShardCollectible, VehicleTokenEntity, LabScientistNPC, SpeedGateEntity } from './types';
 
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 480;
@@ -24,9 +24,10 @@ export const COLORS = {
   thrustGold: '#FBBF24',
 
   // Zapper Laser
-  zapperPylon: '#334155',
+  zapperPylon: '#1E293B',
+  zapperPylonBorder: '#38BDF8',
   zapperCore: '#00FFFF',
-  zapperGlow: 'rgba(0, 255, 255, 0.4)',
+  zapperGlow: 'rgba(0, 255, 255, 0.45)',
   zapperZap: '#FFFFFF',
 
   // Missile
@@ -69,8 +70,30 @@ export function drawJetpackPlayer(
     ctx.beginPath();
     ctx.ellipse(drawX + player.w / 2, drawY + player.h / 2, player.w / 2 + 10, player.h / 2 + 10, 0, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(0, 255, 255, 0.08)';
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
     ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Warp Boost Aura if active
+  if (player.warpBoostTimer > 0) {
+    ctx.save();
+    const warpPulse = (globalFrame % 10) / 10;
+    ctx.strokeStyle = `rgba(153, 69, 255, ${0.8 - warpPulse * 0.4})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(drawX + player.w / 2, drawY + player.h / 2, player.w / 2 + 16, player.h / 2 + 16, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Speed lines trailing back
+    ctx.strokeStyle = 'rgba(20, 241, 149, 0.6)';
+    ctx.lineWidth = 1.5;
+    for (let l = 0; l < 4; l++) {
+      ctx.beginPath();
+      ctx.moveTo(drawX - 10 - l * 15, drawY + 8 + l * 8);
+      ctx.lineTo(drawX - 35 - l * 20, drawY + 8 + l * 8);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -117,48 +140,71 @@ export function drawJetpackPlayer(
   // Normal Jetpack Runner
   ctx.translate(drawX, drawY);
 
+  // Dynamic flight tilt angle (-15 deg when climbing, +15 deg when diving)
+  const flightTilt = Math.max(-0.25, Math.min(0.25, player.vy * 0.035));
+  ctx.rotate(flightTilt);
+
   // 1. Dual-Nozzle Chrome Jetpack on back
   ctx.fillStyle = '#1E293B';
-  ctx.fillRect(-7 * s, 4 * s, 6 * s, 10 * s); // jetpack body
+  ctx.beginPath();
+  ctx.roundRect(-8 * s, 4 * s, 7 * s, 11 * s, 3);
+  ctx.fill();
+
   ctx.fillStyle = COLORS.bootsChrome;
-  ctx.fillRect(-6 * s, 3 * s, 4 * s, 2 * s); // top intake
-  ctx.fillRect(-7 * s, 14 * s, 5 * s, 3 * s); // bottom exhaust nozzle
+  ctx.fillRect(-7 * s, 2.5 * s, 5 * s, 2 * s); // top chrome intake
+  ctx.fillRect(-8 * s, 15 * s, 6 * s, 3 * s); // exhaust nozzle bell
 
   // Solana Glowing Power Cell on Jetpack
   ctx.fillStyle = suitAccent;
-  ctx.fillRect(-5 * s, 6 * s, 3 * s, 6 * s);
+  ctx.fillRect(-6 * s, 6 * s, 3 * s, 6 * s);
 
   // Jetpack Thruster Flame Exhaust (when holding thrust)
   if (player.isThrusting) {
-    const flameLen = 8 + (globalFrame % 4) * 3;
-    ctx.fillStyle = player.skin === 'fire' ? '#F97316' : COLORS.thrustCyan;
-    ctx.fillRect(-7 * s, 17 * s, 5 * s, flameLen * s);
+    const flameLen = 10 + (globalFrame % 4) * 4;
+    const exhaustColor = player.skin === 'fire' ? '#F97316' : player.skin === 'gold' ? '#FBBF24' : COLORS.thrustCyan;
+
+    // Outer plasma flare
+    ctx.fillStyle = exhaustColor;
+    ctx.beginPath();
+    ctx.moveTo(-8 * s, 18 * s);
+    ctx.lineTo(-5 * s, (18 + flameLen) * s);
+    ctx.lineTo(-2 * s, 18 * s);
+    ctx.fill();
+
+    // Inner white-hot core
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(-6 * s, 17 * s, 3 * s, (flameLen * 0.6) * s);
+    ctx.beginPath();
+    ctx.moveTo(-7 * s, 18 * s);
+    ctx.lineTo(-5 * s, (18 + flameLen * 0.55) * s);
+    ctx.lineTo(-3 * s, 18 * s);
+    ctx.fill();
   }
 
-  // 2. Helmet
+  // 2. Helmet & Visor
   ctx.fillStyle = '#0F172A';
-  ctx.fillRect(2 * s, 0, 7.5 * s, 5 * s);
+  ctx.beginPath();
+  ctx.roundRect(2 * s, 0, 8 * s, 5.5 * s, 3);
+  ctx.fill();
 
-  // Visor
+  // Glowing Visor
   ctx.fillStyle = visorColor;
-  ctx.fillRect(4.5 * s, 1.8 * s, 5.5 * s, 2 * s);
+  ctx.fillRect(4.5 * s, 1.8 * s, 6 * s, 2.2 * s);
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(7 * s, 2 * s, 1.5 * s, 1.5 * s); // reflection
+  ctx.fillRect(7.5 * s, 2 * s, 1.8 * s, 1.5 * s); // reflection glint
 
-  // Scarf streaming back
+  // Animated Scarf Ripples
+  const scarfWave = Math.sin(globalFrame * 0.3) * 1.5;
   ctx.fillStyle = suitAccent;
   ctx.fillRect(-2 * s, 4.5 * s, 4 * s, 1.8 * s);
-  ctx.fillRect(-4 * s, 5 * s, 3 * s, 1.5 * s);
+  ctx.fillRect((-4 - scarfWave) * s, (5 + scarfWave * 0.5) * s, 3 * s, 1.5 * s);
 
   // 3. Torso / Suit
   ctx.fillStyle = suitPrimary;
-  ctx.fillRect(1.5 * s, 5.5 * s, 6.5 * s, 5 * s);
+  ctx.fillRect(1.5 * s, 5.5 * s, 7 * s, 5.5 * s);
 
-  // Chest emblem
+  // Chest emblem / Solana circuit
   ctx.fillStyle = suitAccent;
-  ctx.fillRect(3.5 * s, 6.5 * s, 3 * s, 2.5 * s);
+  ctx.fillRect(3.5 * s, 6.8 * s, 3 * s, 2.5 * s);
 
   // 4. Legs / Boots
   ctx.fillStyle = COLORS.bootsChrome;
@@ -166,24 +212,24 @@ export function drawJetpackPlayer(
     // Running stride on floor
     const runFrame = Math.floor(player.walkFrame) % 4;
     if (runFrame === 0) {
-      ctx.fillRect(-1 * s, 10.5 * s, 4 * s, 3.5 * s);
-      ctx.fillRect(6 * s, 9.5 * s, 4 * s, 3.5 * s);
+      ctx.fillRect(-1 * s, 11 * s, 4 * s, 4 * s);
+      ctx.fillRect(6 * s, 10 * s, 4 * s, 4 * s);
     } else if (runFrame === 1) {
-      ctx.fillRect(1 * s, 10.5 * s, 3.5 * s, 3.5 * s);
-      ctx.fillRect(5 * s, 10.5 * s, 3.5 * s, 3.5 * s);
+      ctx.fillRect(1 * s, 11 * s, 3.5 * s, 4 * s);
+      ctx.fillRect(5 * s, 11 * s, 3.5 * s, 4 * s);
     } else if (runFrame === 2) {
-      ctx.fillRect(6 * s, 10.5 * s, 4 * s, 3.5 * s);
-      ctx.fillRect(-1 * s, 9.5 * s, 4 * s, 3.5 * s);
+      ctx.fillRect(6 * s, 11 * s, 4 * s, 4 * s);
+      ctx.fillRect(-1 * s, 10 * s, 4 * s, 4 * s);
     } else {
-      ctx.fillRect(2 * s, 10.5 * s, 3.5 * s, 3.5 * s);
-      ctx.fillRect(4 * s, 10.5 * s, 3.5 * s, 3.5 * s);
+      ctx.fillRect(2 * s, 11 * s, 3.5 * s, 4 * s);
+      ctx.fillRect(4 * s, 11 * s, 3.5 * s, 4 * s);
     }
   } else {
     // Mid-air flight pose (legs angled back aerodynamically)
-    ctx.fillRect(-1 * s, 10.5 * s, 4 * s, 3.5 * s);
-    ctx.fillRect(3 * s, 11.5 * s, 4 * s, 3.5 * s);
+    ctx.fillRect(-2 * s, 11 * s, 4.5 * s, 4 * s);
+    ctx.fillRect(3 * s, 12 * s, 4.5 * s, 4 * s);
     ctx.fillStyle = COLORS.bootsDark;
-    ctx.fillRect(-1 * s, 13 * s, 4 * s, 1 * s);
+    ctx.fillRect(-2 * s, 14 * s, 4.5 * s, 1 * s);
   }
 
   ctx.restore();
@@ -208,75 +254,75 @@ function drawVehicle(
       ctx.scale(1, -1);
       ctx.translate(0, -player.h);
     }
-    ctx.fillStyle = '#0E7490';
+    ctx.fillStyle = '#0891B2';
     ctx.beginPath();
-    ctx.roundRect(0, 4, 38, 26, 8);
+    ctx.roundRect(0, 4, 40, 26, 8);
     ctx.fill();
 
     // Cyan Cockpit Bubble
     ctx.fillStyle = COLORS.visorCyan;
     ctx.beginPath();
-    ctx.ellipse(22, 14, 10, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(24, 14, 11, 7, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Nova Pilot silhouette inside
     ctx.fillStyle = '#0F172A';
-    ctx.fillRect(18, 10, 7, 7);
+    ctx.fillRect(20, 10, 8, 7);
 
     // Rotating Anti-Gravity Gyro Ring
     const angle = globalFrame * 0.15;
     ctx.strokeStyle = '#22D3EE';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.ellipse(19, 17, 18, 6, angle, 0, Math.PI * 2);
+    ctx.ellipse(20, 17, 19, 6, angle, 0, Math.PI * 2);
     ctx.stroke();
 
     // Twin Repulsor Glow
     ctx.fillStyle = '#14F195';
     ctx.fillRect(4, 27, 8, 4);
-    ctx.fillRect(26, 27, 8, 4);
+    ctx.fillRect(28, 27, 8, 4);
   } else if (player.vehicle === 'mech_breaker') {
     // Heavy Armored Cyber Bipedal Stomper
     ctx.fillStyle = '#334155';
     ctx.beginPath();
-    ctx.roundRect(2, 2, 40, 28, 6);
+    ctx.roundRect(2, 2, 42, 28, 6);
     ctx.fill();
 
     // Armored Cockpit Window
     ctx.fillStyle = '#F59E0B';
-    ctx.fillRect(22, 6, 14, 8);
+    ctx.fillRect(24, 6, 14, 8);
 
     // Heavy Stomper Legs
     const step = Math.floor(globalFrame / 6) % 2 === 0;
     ctx.fillStyle = '#1E293B';
     if (step) {
       ctx.fillRect(6, 28, 10, 14);
-      ctx.fillRect(24, 26, 10, 16);
+      ctx.fillRect(26, 26, 10, 16);
     } else {
       ctx.fillRect(6, 26, 10, 16);
-      ctx.fillRect(24, 28, 10, 14);
+      ctx.fillRect(26, 28, 10, 14);
     }
 
     // Heavy Plated Foot Pads
     ctx.fillStyle = '#64748B';
     ctx.fillRect(4, 39, 14, 4);
-    ctx.fillRect(22, 39, 14, 4);
+    ctx.fillRect(24, 39, 14, 4);
   } else if (player.vehicle === 'warp_cycle') {
     // Sleek Cyberpunk Speeder Bike
     ctx.fillStyle = '#1E1B4B';
     ctx.beginPath();
-    ctx.roundRect(0, 12, 44, 20, 6);
+    ctx.roundRect(0, 12, 46, 20, 6);
     ctx.fill();
 
     // Neon Trim
     ctx.fillStyle = '#A855F7';
-    ctx.fillRect(4, 16, 36, 4);
+    ctx.fillRect(4, 16, 38, 4);
 
     // Nova Riding
     ctx.fillStyle = '#0F172A';
-    ctx.fillRect(14, 2, 14, 12);
+    ctx.fillRect(16, 2, 14, 12);
     ctx.fillStyle = '#00FFFF';
-    ctx.fillRect(20, 4, 8, 4);
+    ctx.fillRect(22, 4, 8, 4);
 
     // Rear Turbine Thruster Trail
     ctx.fillStyle = '#C084FC';
@@ -303,12 +349,13 @@ export function drawObstacle(
     if (!obs.launched) {
       // Missile Warning Klaxon indicator tracking player on the right edge!
       const warnY = Math.round(obs.trackingY || drawY);
-      const flash = Math.floor(globalFrame / 6) % 2 === 0;
+      const flash = Math.floor(globalFrame / 5) % 2 === 0;
 
       ctx.save();
-      ctx.fillStyle = flash ? '#EF4444' : '#7F1D1D';
+      // Holographic tracking box
+      ctx.fillStyle = flash ? 'rgba(239, 68, 68, 0.9)' : 'rgba(153, 27, 27, 0.7)';
       ctx.beginPath();
-      ctx.roundRect(CANVAS_WIDTH - 44, warnY - 14, 36, 28, 6);
+      ctx.roundRect(CANVAS_WIDTH - 50, warnY - 16, 42, 32, 6);
       ctx.fill();
 
       ctx.strokeStyle = '#FFFFFF';
@@ -317,17 +364,23 @@ export function drawObstacle(
 
       // Warning Exclamation mark
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'black 14px monospace';
+      ctx.font = 'bold 16px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('!', CANVAS_WIDTH - 26, warnY);
+      ctx.fillText('!', CANVAS_WIDTH - 29, warnY);
+
+      // Distance Countdown
+      const countdown = Math.max(0, Math.round((obs.warningTimer || 60) * 4));
+      ctx.font = 'bold 8px monospace';
+      ctx.fillStyle = '#FDE047';
+      ctx.fillText(`${countdown}m`, CANVAS_WIDTH - 29, warnY + 22);
 
       // Horizontal tracking laser pointer line
-      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-      ctx.setLineDash([8, 8]);
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+      ctx.setLineDash([8, 6]);
       ctx.beginPath();
-      ctx.moveTo(CANVAS_WIDTH - 44, warnY);
-      ctx.lineTo(CANVAS_WIDTH - 240, warnY);
+      ctx.moveTo(CANVAS_WIDTH - 50, warnY);
+      ctx.lineTo(CANVAS_WIDTH - 260, warnY);
       ctx.stroke();
 
       ctx.restore();
@@ -338,7 +391,7 @@ export function drawObstacle(
     ctx.save();
     ctx.translate(drawX, drawY);
 
-    // Heavy red missile rocket
+    // Heavy red missile rocket body
     ctx.fillStyle = COLORS.missileRed;
     ctx.beginPath();
     ctx.moveTo(0, 8);
@@ -352,10 +405,14 @@ export function drawObstacle(
 
     // Rear Fin
     ctx.fillStyle = '#374151';
-    ctx.fillRect(20, -2, 6, 20);
+    ctx.fillRect(20, -3, 6, 22);
+
+    // Warhead tip
+    ctx.fillStyle = '#FDE047';
+    ctx.fillRect(0, 6, 4, 4);
 
     // Exhaust Flame
-    const exhaustLen = 10 + (globalFrame % 3) * 4;
+    const exhaustLen = 12 + (globalFrame % 3) * 5;
     ctx.fillStyle = '#F59E0B';
     ctx.fillRect(26, 4, exhaustLen, 8);
     ctx.fillStyle = '#FFFFFF';
@@ -375,36 +432,60 @@ export function drawObstacle(
     ctx.translate(-obs.w / 2, -obs.h / 2);
   }
 
-  const pulse = Math.sin(globalFrame * 0.25) * 1.5;
+  const pulse = Math.sin(globalFrame * 0.25) * 2.0;
 
   if (obs.type === 'zapper_horizontal') {
-    // Left Pylon
+    // Left & Right Pylons
     drawPylon(ctx, 0, 0);
-    // Right Pylon
     drawPylon(ctx, obs.w - 14, 0);
 
-    // Pulsing Central Laser Beam
+    // Pulsing Central Laser Glow
     ctx.fillStyle = COLORS.zapperGlow;
     ctx.fillRect(10, 4 - pulse / 2, obs.w - 20, 8 + pulse);
-    ctx.fillStyle = COLORS.zapperCore;
-    ctx.fillRect(12, 6, obs.w - 24, 4);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(14, 7, obs.w - 28, 2);
+
+    // Animated Electric Arcing Lightning Segments
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(10, 8);
+    const steps = 6;
+    const segW = (obs.w - 20) / steps;
+    for (let s = 1; s <= steps; s++) {
+      const jitter = (s === steps) ? 0 : (Math.random() - 0.5) * 6;
+      ctx.lineTo(10 + s * segW, 8 + jitter);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = COLORS.zapperCore;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
   } else if (obs.type === 'zapper_vertical' || obs.type === 'laser_gate') {
-    // Top Pylon
+    // Top & Bottom Pylons
     drawPylon(ctx, 0, 0);
-    // Bottom Pylon
     drawPylon(ctx, 0, obs.h - 14);
 
-    // Vertical Laser Beam
+    // Vertical Laser Glow
     ctx.fillStyle = COLORS.zapperGlow;
     ctx.fillRect(4 - pulse / 2, 10, 8 + pulse, obs.h - 20);
-    ctx.fillStyle = COLORS.zapperCore;
-    ctx.fillRect(6, 12, 4, obs.h - 24);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(7, 14, 2, obs.h - 28);
+
+    // Animated Electric Arcing Lightning Segments
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(8, 10);
+    const steps = 8;
+    const segH = (obs.h - 20) / steps;
+    for (let s = 1; s <= steps; s++) {
+      const jitter = (s === steps) ? 0 : (Math.random() - 0.5) * 6;
+      ctx.lineTo(8 + jitter, 10 + s * segH);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = COLORS.zapperCore;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
   } else if (obs.type === 'zapper_diagonal' || obs.type === 'zapper_rotating') {
-    // Angled / Rotating Zapper
+    // Angled / Rotating Zapper with Pylons at ends
     drawPylon(ctx, 0, 0);
     drawPylon(ctx, obs.w - 14, obs.h - 14);
 
@@ -416,10 +497,17 @@ export function drawObstacle(
     ctx.stroke();
 
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(8, 8);
-    ctx.lineTo(obs.w - 8, obs.h - 8);
+    const steps = 6;
+    for (let s = 1; s <= steps; s++) {
+      const t = s / steps;
+      const targetX = 8 + t * (obs.w - 16);
+      const targetY = 8 + t * (obs.h - 16);
+      const jitter = (s === steps) ? 0 : (Math.random() - 0.5) * 8;
+      ctx.lineTo(targetX + jitter, targetY - jitter);
+    }
     ctx.stroke();
   }
 
@@ -428,15 +516,22 @@ export function drawObstacle(
 
 function drawPylon(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.fillStyle = '#0F172A';
-  ctx.fillRect(x, y, 14, 14);
-  ctx.fillStyle = '#38BDF8';
-  ctx.fillRect(x + 3, y + 3, 8, 8);
+  ctx.beginPath();
+  ctx.roundRect(x, y, 14, 14, 3);
+  ctx.fill();
+
+  ctx.strokeStyle = '#38BDF8';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#00FFFF';
+  ctx.fillRect(x + 4, y + 4, 6, 6);
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(x + 5, y + 5, 4, 4);
 }
 
 /**
- * Draws Floating Solana Energy Shard
+ * Draws Floating Solana Energy Shard (3D Diamond with Shimmer)
  */
 export function drawShardCollectible(
   ctx: CanvasRenderingContext2D,
@@ -447,27 +542,79 @@ export function drawShardCollectible(
   const drawX = Math.round(shard.x);
   const drawY = Math.round(shard.y);
 
+  // 3D rotation projection
   const rotFactor = Math.abs(Math.cos(globalFrame * 0.12));
   const w = Math.max(3, 16 * rotFactor);
 
   ctx.save();
-  ctx.fillStyle = COLORS.solanaGreen;
+  // Outer gradient glow
+  ctx.fillStyle = 'rgba(20, 241, 149, 0.2)';
   ctx.beginPath();
-  ctx.ellipse(drawX + 8, drawY + 8, w / 2, 9, 0, 0, Math.PI * 2);
+  ctx.ellipse(drawX + 8, drawY + 8, 12, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#34D399';
+  // Diamond shape
+  ctx.fillStyle = COLORS.solanaGreen;
   ctx.beginPath();
-  ctx.ellipse(drawX + 8, drawY + 8, Math.max(1, w / 2 - 2), 6, 0, 0, Math.PI * 2);
+  ctx.moveTo(drawX + 8, drawY);
+  ctx.lineTo(drawX + 8 + w / 2, drawY + 8);
+  ctx.lineTo(drawX + 8, drawY + 16);
+  ctx.lineTo(drawX + 8 - w / 2, drawY + 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top facet glint
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(drawX + 8, drawY + 2);
+  ctx.lineTo(drawX + 8 + w * 0.3, drawY + 8);
+  ctx.lineTo(drawX + 8, drawY + 7);
+  ctx.closePath();
   ctx.fill();
 
   if (w > 8) {
     ctx.fillStyle = '#064E3B';
-    ctx.font = 'bold 9px monospace';
+    ctx.font = 'bold 8px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('$', drawX + 8, drawY + 8);
   }
+  ctx.restore();
+}
+
+/**
+ * Draws Quantum Speed Booster Gate [ SPEED GATE >> ]
+ */
+export function drawSpeedGate(
+  ctx: CanvasRenderingContext2D,
+  gate: SpeedGateEntity,
+  globalFrame: number
+) {
+  if (!gate.active) return;
+  const drawX = Math.round(gate.x);
+  const drawY = Math.round(gate.y);
+
+  ctx.save();
+  const pulse = Math.sin(globalFrame * 0.2) * 3;
+
+  // Outer glowing ring
+  ctx.strokeStyle = '#9945FF';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(drawX + gate.w / 2, drawY + gate.h / 2, gate.w / 2 + pulse, gate.h / 2 + pulse, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Inner energy aura
+  ctx.fillStyle = 'rgba(153, 69, 255, 0.15)';
+  ctx.fill();
+
+  // Chevrons [ >> ]
+  ctx.fillStyle = '#14F195';
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('>>', drawX + gate.w / 2, drawY + gate.h / 2);
+
   ctx.restore();
 }
 
@@ -486,19 +633,19 @@ export function drawVehicleToken(
   ctx.save();
   ctx.fillStyle = '#1E1B4B';
   ctx.beginPath();
-  ctx.roundRect(drawX, drawY, 26, 26, 6);
+  ctx.roundRect(drawX, drawY, 28, 28, 6);
   ctx.fill();
 
   ctx.strokeStyle = '#A855F7';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
 
   // Floating Symbol
   ctx.fillStyle = '#C084FC';
-  ctx.font = 'bold 13px monospace';
+  ctx.font = 'bold 14px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('V', drawX + 13, drawY + 13);
+  ctx.fillText('V', drawX + 14, drawY + 14);
   ctx.restore();
 }
 
@@ -581,6 +728,24 @@ export function drawFacilityBackground(
     ctx.moveTo(x, 40);
     ctx.lineTo(x, 416);
     ctx.stroke();
+  }
+
+  // Distant Hologram City Billboard (Every 400m)
+  const billboardX = 600 - (Math.round(distance * 1.8) % 800);
+  if (billboardX > -150 && billboardX < CANVAS_WIDTH + 50) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(153, 69, 255, 0.06)';
+    ctx.fillRect(billboardX, 90, 120, 50);
+    ctx.strokeStyle = 'rgba(153, 69, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(billboardX, 90, 120, 50);
+
+    ctx.fillStyle = 'rgba(20, 241, 149, 0.35)';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SOLANA DEVNET', billboardX + 60, 110);
+    ctx.fillText('65,000 TPS CLUSTER', billboardX + 60, 126);
+    ctx.restore();
   }
 
   // 4. Solid Ceiling Plating

@@ -13,32 +13,31 @@ import OracleToad from '@/components/ai/OracleToad';
 import SolanaInspector from '@/components/beginner/SolanaInspector';
 import HowToPlayModal from '@/components/demo/HowToPlayModal';
 import DevnetDeployModal from '@/components/beginner/DevnetDeployModal';
-import { StakingPerks } from '@/lib/mario/types';
+import { StakingPerks } from '@/lib/jetpack/types';
 import { getStoredTransactions } from '@/lib/solana/transactions';
 import { SolanaTransactionRecord } from '@/lib/solana/types';
 import { 
-  Gamepad2, 
+  Rocket, 
   ArrowDownUp, 
   Flame, 
   ShoppingBag, 
   Trophy, 
   Sparkles, 
   Bot,
-  Zap
+  Zap,
+  Coins,
+  Cpu
 } from 'lucide-react';
 
-type ActiveTab = 
-  | 'PLAY' 
-  | 'SWAP' 
-  | 'STAKE' 
-  | 'WAGER' 
-  | 'SHOP' 
-  | 'LEADERBOARD' 
-  | 'AI_ARCHITECT' 
-  | 'ORACLE_TOAD';
+type ActiveTab = 'PLAY' | 'DEFI' | 'SHOP' | 'LEADERBOARD' | 'AI_LAB';
+type DefiSubTab = 'SWAP' | 'STAKE' | 'WAGER';
+type AiSubTab = 'COPILOT' | 'ARCHITECT';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('PLAY');
+  const [defiSubTab, setDefiSubTab] = useState<DefiSubTab>('SWAP');
+  const [aiSubTab, setAiSubTab] = useState<AiSubTab>('COPILOT');
+
   const [inGameCoins, setInGameCoins] = useState<number>(45);
   const [solBalance, setSolBalance] = useState<number>(0.5);
   const [activeSkin, setActiveSkin] = useState<'classic' | 'fire' | 'gold' | 'shadow'>('classic');
@@ -47,7 +46,6 @@ export default function Home() {
     superJump: true,
     shardMagnet: false,
   });
-  const [customLevelPrompt, setCustomLevelPrompt] = useState<string>('');
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState<boolean>(false);
   const [isDeployGuideOpen, setIsDeployGuideOpen] = useState<boolean>(false);
@@ -72,7 +70,6 @@ export default function Home() {
   };
 
   const handleGenerateAndPlayLevel = (prompt: string) => {
-    setCustomLevelPrompt(prompt);
     setActiveTab('PLAY');
   };
 
@@ -88,109 +85,74 @@ export default function Home() {
         onBalanceUpdate={setSolBalance}
       />
 
-      {/* Navigation Tabs Bar */}
-      <div className="border-b border-zinc-800/80 bg-zinc-950 px-4 py-2">
-        <div className="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+      {/* Clean, Unified 5-Tab Segmented Control (Unslop & Calm) */}
+      <div className="border-b border-zinc-800/80 bg-zinc-950 px-4 py-2.5 sticky top-[53px] z-40 backdrop-blur-md">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-1 overflow-x-auto no-scrollbar text-xs bg-zinc-900/70 p-1 rounded-xl border border-zinc-800/80">
           <button
             onClick={() => setActiveTab('PLAY')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
               activeTab === 'PLAY'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
-            <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Endless Sol-Jet (60 FPS)</span>
+            <Rocket className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Flight Arcade</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('SWAP')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
-              activeTab === 'SWAP'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            onClick={() => setActiveTab('DEFI')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
+              activeTab === 'DEFI'
+                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
-            <ArrowDownUp className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Quantum Swap</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('STAKE')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
-              activeTab === 'STAKE'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Solar Staking</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('WAGER')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
-              activeTab === 'WAGER'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            <span>Wager Escrow</span>
+            <Coins className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Quantum DeFi</span>
           </button>
 
           <button
             onClick={() => setActiveTab('SHOP')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
               activeTab === 'SHOP'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 text-purple-400" />
-            <span>Chassis Shop</span>
+            <span>Cyber Hangar</span>
           </button>
 
           <button
             onClick={() => setActiveTab('LEADERBOARD')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
               activeTab === 'LEADERBOARD'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
             <Trophy className="w-3.5 h-3.5 text-amber-400" />
-            <span>Leaderboard</span>
+            <span>Flight Records</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('AI_ARCHITECT')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
-              activeTab === 'AI_ARCHITECT'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>AI Matrix Lab</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('ORACLE_TOAD')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
-              activeTab === 'ORACLE_TOAD'
-                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+            onClick={() => setActiveTab('AI_LAB')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg font-semibold transition whitespace-nowrap ${
+              activeTab === 'AI_LAB'
+                ? 'bg-zinc-800 text-white shadow-md border border-zinc-700/80'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
             <Bot className="w-3.5 h-3.5 text-cyan-400" />
-            <span>A.R.I.A. Copilot</span>
+            <span>A.R.I.A. AI Lab</span>
           </button>
         </div>
       </div>
 
       {/* Main Tab Views */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+        {/* 1. FLIGHT ARCADE TAB */}
         {activeTab === 'PLAY' && (
           <JetpackGame
             onCoinCollected={handleCoinCollected}
@@ -200,35 +162,80 @@ export default function Home() {
           />
         )}
 
-        {activeTab === 'SWAP' && (
-          <MushroomSwap
-            inGameCoins={inGameCoins}
-            solBalance={solBalance}
-            onSwapSuccess={(newCoins, newSol) => {
-              setInGameCoins(newCoins);
-              setSolBalance(newSol);
-            }}
-            onTxConfirmed={() => setTransactions(getStoredTransactions())}
-          />
+        {/* 2. QUANTUM DEFI COMMAND CENTER */}
+        {activeTab === 'DEFI' && (
+          <div className="w-full max-w-2xl mx-auto space-y-4">
+            {/* Sub-navigation for DeFi */}
+            <div className="flex items-center justify-center gap-1 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800 text-xs">
+              <button
+                onClick={() => setDefiSubTab('SWAP')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+                  defiSubTab === 'SWAP'
+                    ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <ArrowDownUp className="w-3.5 h-3.5" />
+                <span>Quantum AMM Swap</span>
+              </button>
+
+              <button
+                onClick={() => setDefiSubTab('STAKE')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+                  defiSubTab === 'STAKE'
+                    ? 'bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Solar Staking (18.5% APY)</span>
+              </button>
+
+              <button
+                onClick={() => setDefiSubTab('WAGER')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+                  defiSubTab === 'WAGER'
+                    ? 'bg-amber-500/15 border border-amber-500/40 text-amber-300 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span>Distance Wager Escrow</span>
+              </button>
+            </div>
+
+            {defiSubTab === 'SWAP' && (
+              <MushroomSwap
+                inGameCoins={inGameCoins}
+                solBalance={solBalance}
+                onSwapSuccess={(newCoins, newSol) => {
+                  setInGameCoins(newCoins);
+                  setSolBalance(newSol);
+                }}
+                onTxConfirmed={() => setTransactions(getStoredTransactions())}
+              />
+            )}
+
+            {defiSubTab === 'STAKE' && (
+              <StakingVault
+                solBalance={solBalance}
+                onPerksChanged={setStakingPerks}
+                onBalanceChanged={setSolBalance}
+                onTxConfirmed={() => setTransactions(getStoredTransactions())}
+              />
+            )}
+
+            {defiSubTab === 'WAGER' && (
+              <WagerEscrow
+                solBalance={solBalance}
+                onWagerLocked={wager => setSolBalance(s => s - wager)}
+                onTxConfirmed={() => setTransactions(getStoredTransactions())}
+              />
+            )}
+          </div>
         )}
 
-        {activeTab === 'STAKE' && (
-          <StakingVault
-            solBalance={solBalance}
-            onPerksChanged={setStakingPerks}
-            onBalanceChanged={setSolBalance}
-            onTxConfirmed={() => setTransactions(getStoredTransactions())}
-          />
-        )}
-
-        {activeTab === 'WAGER' && (
-          <WagerEscrow
-            solBalance={solBalance}
-            onWagerLocked={wager => setSolBalance(s => s - wager)}
-            onTxConfirmed={() => setTransactions(getStoredTransactions())}
-          />
-        )}
-
+        {/* 3. CYBER HANGAR SHOP */}
         {activeTab === 'SHOP' && (
           <ItemShop
             inGameCoins={inGameCoins}
@@ -240,18 +247,56 @@ export default function Home() {
           />
         )}
 
+        {/* 4. FLIGHT RECORDS & PROOFS */}
         {activeTab === 'LEADERBOARD' && <Leaderboard />}
 
-        {activeTab === 'AI_ARCHITECT' && (
-          <AiLevelGenerator onGenerateAndPlay={handleGenerateAndPlayLevel} />
-        )}
+        {/* 5. A.R.I.A. AI LAB */}
+        {activeTab === 'AI_LAB' && (
+          <div className="w-full max-w-2xl mx-auto space-y-4">
+            <div className="flex items-center justify-center gap-1 bg-zinc-950 p-1.5 rounded-xl border border-zinc-800 text-xs">
+              <button
+                onClick={() => setAiSubTab('COPILOT')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+                  aiSubTab === 'COPILOT'
+                    ? 'bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>A.R.I.A. Conversational Terminal</span>
+              </button>
 
-        {activeTab === 'ORACLE_TOAD' && (
-          <OracleToad
-            onAirdropRequested={() => setSolBalance(s => s + 0.5)}
-            onSwapSuggested={() => setActiveTab('SWAP')}
-            onStakeSuggested={() => setActiveTab('STAKE')}
-          />
+              <button
+                onClick={() => setAiSubTab('ARCHITECT')}
+                className={`flex-1 py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5 ${
+                  aiSubTab === 'ARCHITECT'
+                    ? 'bg-purple-500/15 border border-purple-500/40 text-purple-300 font-bold'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>AI Wave & Threat Architect</span>
+              </button>
+            </div>
+
+            {aiSubTab === 'COPILOT' && (
+              <OracleToad
+                onAirdropRequested={() => setSolBalance(s => s + 0.5)}
+                onSwapSuggested={() => {
+                  setActiveTab('DEFI');
+                  setDefiSubTab('SWAP');
+                }}
+                onStakeSuggested={() => {
+                  setActiveTab('DEFI');
+                  setDefiSubTab('STAKE');
+                }}
+              />
+            )}
+
+            {aiSubTab === 'ARCHITECT' && (
+              <AiLevelGenerator onGenerateAndPlay={handleGenerateAndPlayLevel} />
+            )}
+          </div>
         )}
       </main>
 
@@ -274,18 +319,18 @@ export default function Home() {
         onClose={() => setIsDeployGuideOpen(false)}
       />
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-900 bg-zinc-950 py-4 px-4 text-center text-xs text-zinc-500 font-mono">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      {/* Muted, Clean Footer */}
+      <footer className="border-t border-zinc-900 bg-zinc-950 py-4 px-4 text-center text-xs text-zinc-500 font-mono mt-auto">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div>
-            CYBER NOVA • Powered by <span className="text-cyan-400 font-bold">Solana Devnet</span> for the MLH Solana Hackathon
+            CYBER NOVA: Sol-Jet Velocity • Powered by <span className="text-cyan-400 font-bold">Solana Devnet</span> for MLH Hackathon
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <button
               onClick={() => setIsHowToPlayOpen(true)}
               className="text-cyan-400 hover:underline"
             >
-              How to Play Guide
+              Flight Manual
             </button>
             <button
               onClick={() => setIsDeployGuideOpen(true)}

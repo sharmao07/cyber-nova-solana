@@ -27,6 +27,9 @@ export interface JetpackPlayer {
   invincibleTimer: number;
   walkFrame: number;
   skin: SkinType;
+  combo: number;
+  comboTimer: number;
+  warpBoostTimer: number;
 }
 
 export type ObstacleType = 
@@ -47,6 +50,7 @@ export interface Obstacle {
   angle?: number;
   rotSpeed?: number;
   active: boolean;
+  nearMissChecked?: boolean;
   // Missile specific fields
   warningTimer?: number;    // Countdown while tracking player
   trackingY?: number;       // Tracks player Y during warning
@@ -64,6 +68,15 @@ export interface ShardCollectible {
 export interface VehicleTokenEntity {
   id: string;
   type: VehicleType;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  active: boolean;
+}
+
+export interface SpeedGateEntity {
+  id: string;
   x: number;
   y: number;
   w: number;
