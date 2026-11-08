@@ -19,11 +19,15 @@ import {
   VolumeX, 
   ShieldCheck, 
   Copy,
-  Check
+  Check,
+  Gamepad2,
+  Rocket
 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenInspector: () => void;
+  onOpenHowToPlay?: () => void;
+  onOpenDeployGuide?: () => void;
   txCount: number;
   inGameCoins: number;
   onBalanceUpdate?: (bal: number) => void;
@@ -31,6 +35,8 @@ interface HeaderProps {
 
 export default function Header({
   onOpenInspector,
+  onOpenHowToPlay,
+  onOpenDeployGuide,
   txCount,
   inGameCoins,
   onBalanceUpdate,
@@ -178,6 +184,30 @@ export default function Header({
               {balance.toFixed(3)} SOL
             </span>
           </div>
+
+          {/* How to Play Guide Shortcut */}
+          {onOpenHowToPlay && (
+            <button
+              onClick={onOpenHowToPlay}
+              title="Open CYBER NOVA Game Guide & Controls"
+              className="hidden lg:flex items-center gap-1.5 bg-zinc-900 border border-cyan-500/40 hover:border-cyan-400 px-2.5 py-1.5 rounded-lg text-xs font-mono text-cyan-300 transition"
+            >
+              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Guide</span>
+            </button>
+          )}
+
+          {/* Devnet Deploy Guide Shortcut */}
+          {onOpenDeployGuide && (
+            <button
+              onClick={onOpenDeployGuide}
+              title="Open Solana Devnet Deployment Guide"
+              className="hidden xl:flex items-center gap-1.5 bg-zinc-900 border border-emerald-500/40 hover:border-emerald-400 px-2.5 py-1.5 rounded-lg text-xs font-mono text-emerald-300 transition"
+            >
+              <Rocket className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Deploy</span>
+            </button>
+          )}
 
           {/* 1-Click Devnet Faucet Button */}
           <button

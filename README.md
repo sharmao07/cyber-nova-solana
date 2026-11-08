@@ -121,10 +121,21 @@ pnpm run build
 ### 4. Verify Live Devnet Connection & Attestation
 Run our test suite to broadcast an on-chain speedrun attestation directly to Solana Devnet:
 ```bash
-pnpm dlx tsx scripts/test-solana.ts
+pnpm run test:solana
+```
+
+### 5. Automated 1-Command Devnet Deployment
+```bash
+./scripts/deploy-devnet.sh
 ```
 
 ---
 
+## 📚 Documentation & Submission Links
+- **[DEPLOYMENT.md](file:///Users/ojussharma/.gemini/antigravity/scratch/solarena/DEPLOYMENT.md):** Complete step-by-step instructions for Solana CLI, Devnet RPC, Vercel deployment, and Anchor configuration.
+- **[SUBMISSION.md](file:///Users/ojussharma/.gemini/antigravity/scratch/solarena/SUBMISSION.md):** Pre-formatted, copy-paste ready hackathon submission text for Devpost covering all 5 MLH prize tracks.
+
+---
+
 ## 📜 License
-MIT License. Built for the MLH Solana Hackathon 2026.
+MIT License. Built with ❤️ for the MLH Solana Hackathon 2026.

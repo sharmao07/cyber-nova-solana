@@ -47,8 +47,13 @@ import {
   Zap, 
   Flame, 
   Gamepad2, 
-  Coins
+  Coins,
+  BookOpen,
+  Rocket,
+  ShieldAlert
 } from 'lucide-react';
+import HowToPlayModal from '@/components/demo/HowToPlayModal';
+import DevnetDeployModal from '@/components/beginner/DevnetDeployModal';
 
 interface MarioGameProps {
   onCoinCollected: (amount: number) => void;
@@ -79,9 +84,12 @@ export default function MarioGame({
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [hasCrtEffect, setHasCrtEffect] = useState<boolean>(true);
 
-  // Modals
+  // Modals & Guides
   const [showClearModal, setShowClearModal] = useState<boolean>(false);
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState<boolean>(false);
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState<boolean>(false);
+  const [isPracticeMode, setIsPracticeMode] = useState<boolean>(false);
   const [isAttesting, setIsAttesting] = useState<boolean>(false);
   const [attestationSig, setAttestationSig] = useState<string | null>(null);
   const [runStats, setRunStats] = useState<{ time: number; shards: number; score: number } | null>(null);
@@ -264,6 +272,37 @@ export default function MarioGame({
         }
       }
 
+      if (isPracticeMode) {
+        gs.player.invincibleTimer = 60;
+      }
+
+      // Thruster Exhaust & Dash Spark Emitter
+      if (!gs.player.grounded && gs.globalFrame % 3 === 0) {
+        gs.particles.push({
+          x: gs.player.facingLeft ? gs.player.x + gs.player.w - 4 : gs.player.x + 4,
+          y: gs.player.y + gs.player.h,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: 2 + Math.random() * 2,
+          color: '#00FFFF',
+          size: 3,
+          life: 12,
+          maxLife: 12,
+          gravity: 0.1,
+        });
+      } else if (Math.abs(gs.player.vx) > 3 && gs.globalFrame % 4 === 0) {
+        gs.particles.push({
+          x: gs.player.facingLeft ? gs.player.x + gs.player.w : gs.player.x,
+          y: gs.player.y + gs.player.h - 2,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -Math.random() * 2,
+          color: '#14F195',
+          size: 2,
+          life: 10,
+          maxLife: 10,
+          gravity: 0.2,
+        });
+      }
+
       const out = updateGamePhysics(
         gs.player,
         gs.level,
@@ -342,12 +381,84 @@ export default function MarioGame({
     gs: typeof gameStateRef.current,
     skin: 'classic' | 'fire' | 'gold' | 'shadow'
   ) => {
-    // 1. Background Fill
+    // 1. Background Fill & Parallax Biome Skyline
     ctx.fillStyle = gs.level.bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Decorative futuristic background grid lines
-    ctx.strokeStyle = 'rgba(20, 241, 149, 0.05)';
+    const px = Math.round(gs.viewportX * 0.25) % 600;
+
+    if (gs.level.theme === 'cyber_city') {
+      // Cyber City Skyline Silhouettes
+      ctx.fillStyle = '#060814';
+      for (let i = -1; i < 5; i++) {
+        const bx = i * 200 - px;
+        ctx.fillRect(bx, 130, 65, 350);
+        ctx.fillRect(bx + 75, 80, 55, 400);
+        ctx.fillRect(bx + 140, 160, 45, 320);
+
+        // Glowing neon windows
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.25)';
+        for (let wy = 110; wy < 380; wy += 26) {
+          ctx.fillRect(bx + 85, wy, 3, 5);
+          ctx.fillRect(bx + 105, wy, 3, 5);
+          ctx.fillRect(bx + 15, wy + 35, 3, 5);
+        }
+        ctx.fillStyle = '#060814';
+      }
+
+      // Sweeping searchlight beam across cyber sky
+      const beamAngle = Math.sin(gs.globalFrame * 0.02) * 0.35;
+      ctx.save();
+      ctx.fillStyle = 'rgba(20, 241, 149, 0.04)';
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, canvas.height);
+      ctx.lineTo(canvas.width / 2 + Math.tan(beamAngle - 0.12) * 480, 0);
+      ctx.lineTo(canvas.width / 2 + Math.tan(beamAngle + 0.12) * 480, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (gs.level.theme === 'mempool_cavern') {
+      // Stalactites and deep mempool data conduits
+      ctx.fillStyle = '#05070D';
+      for (let i = -1; i < 5; i++) {
+        const cx = i * 180 - px;
+        ctx.beginPath();
+        ctx.moveTo(cx, 0);
+        ctx.lineTo(cx + 35, 100);
+        ctx.lineTo(cx + 70, 0);
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(153, 69, 255, 0.18)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, 70);
+      ctx.bezierCurveTo(250, 140, 500, 30, 800, 100);
+      ctx.stroke();
+    } else if (gs.level.theme === 'sky_uplink') {
+      // Glowing high-altitude solar clouds
+      ctx.fillStyle = 'rgba(34, 211, 238, 0.09)';
+      for (let i = -1; i < 4; i++) {
+        const cx = i * 260 - px;
+        ctx.beginPath();
+        ctx.arc(cx + 50, 100, 40, 0, Math.PI * 2);
+        ctx.arc(cx + 100, 90, 55, 0, Math.PI * 2);
+        ctx.arc(cx + 160, 100, 40, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (gs.level.theme === 'titan_citadel') {
+      // Heavy dreadnought fortress pillars & alarm beacons
+      ctx.fillStyle = '#09090B';
+      for (let i = -1; i < 5; i++) {
+        const ix = i * 180 - px;
+        ctx.fillRect(ix, 0, 40, 480);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+        ctx.fillRect(ix + 16, 50, 8, 16);
+        ctx.fillStyle = '#09090B';
+      }
+    }
+
+    // Perspective Cyber-Grid Lines
+    ctx.strokeStyle = 'rgba(20, 241, 149, 0.04)';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 40) {
       ctx.beginPath();
@@ -411,6 +522,49 @@ export default function MarioGame({
       ctx.beginPath();
       ctx.arc(pb.x - gs.viewportX + 6, pb.y + 6, 3, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // 6b. Render Titan Plasma Waves
+    for (const tw of gs.titanWaves) {
+      if (!tw.active) continue;
+      const twX = Math.round(tw.x - gs.viewportX);
+      const twY = Math.round(tw.y);
+
+      // Outer plasma flame wave
+      ctx.fillStyle = '#EF4444';
+      ctx.beginPath();
+      ctx.arc(twX + 10, twY + 8, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner heat core
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(twX + 10, twY + 8, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(twX + 10, twY + 8, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 6c. Render Floating Score Popups
+    for (let i = gs.scorePopups.length - 1; i >= 0; i--) {
+      const sp = gs.scorePopups[i];
+      sp.y += sp.vy;
+      sp.opacity -= 0.025;
+
+      if (sp.opacity <= 0) {
+        gs.scorePopups.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.fillStyle = `rgba(20, 241, 149, ${Math.max(0, sp.opacity)})`;
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(sp.text, sp.x - gs.viewportX, sp.y);
+      ctx.restore();
     }
 
     // 7. Render Particles
@@ -685,6 +839,38 @@ export default function MarioGame({
           </div>
         </div>
 
+        {/* Quick Guide & Mode Shortcuts Bar */}
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setIsHowToPlayOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition shadow-sm hover:shadow-cyan-500/20"
+            >
+              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>🎮 How to Play / Demo Guide</span>
+            </button>
+
+            <button
+              onClick={() => setIsDeployModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition shadow-sm hover:shadow-emerald-500/20"
+            >
+              <Rocket className="w-3.5 h-3.5 text-emerald-400" />
+              <span>🚀 Deploy on Devnet</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsPracticeMode(!isPracticeMode)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition border ${
+              isPracticeMode
+                ? 'bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/25'
+                : 'bg-zinc-900/80 border-zinc-700 text-zinc-400 hover:text-white'
+            }`}
+          >
+            <span>🛡️ Practice Mode: {isPracticeMode ? 'ACTIVE (Invulnerable)' : 'OFF'}</span>
+          </button>
+        </div>
+
         {/* Mobile Touch Controls */}
         <div className="mt-4 grid grid-cols-2 gap-4 select-none sm:hidden">
           <div className="flex items-center gap-2">
@@ -846,6 +1032,21 @@ export default function MarioGame({
           </div>
         </div>
       )}
+      {/* Interactive Guide & Demo Modal */}
+      <HowToPlayModal
+        isOpen={isHowToPlayOpen}
+        onClose={() => setIsHowToPlayOpen(false)}
+        onStartPractice={() => {
+          setIsPracticeMode(true);
+          loadLevel('1-1');
+        }}
+      />
+
+      {/* Devnet Deployment Guide Modal */}
+      <DevnetDeployModal
+        isOpen={isDeployModalOpen}
+        onClose={() => setIsDeployModalOpen(false)}
+      />
     </div>
   );
 }

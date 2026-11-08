@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:solana": "npx tsx scripts/test-solana.ts",
+    "deploy:devnet": "./scripts/deploy-devnet.sh"
   },
   "dependencies": {
     "@solana/spl-token": "^0.4.15",

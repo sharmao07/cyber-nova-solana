@@ -11,6 +11,8 @@ import Leaderboard from '@/components/gaming/Leaderboard';
 import AiLevelGenerator from '@/components/ai/AiLevelGenerator';
 import OracleToad from '@/components/ai/OracleToad';
 import SolanaInspector from '@/components/beginner/SolanaInspector';
+import HowToPlayModal from '@/components/demo/HowToPlayModal';
+import DevnetDeployModal from '@/components/beginner/DevnetDeployModal';
 import { StakingPerks } from '@/lib/mario/types';
 import { getStoredTransactions } from '@/lib/solana/transactions';
 import { SolanaTransactionRecord } from '@/lib/solana/types';
@@ -47,6 +49,8 @@ export default function Home() {
   });
   const [customLevelPrompt, setCustomLevelPrompt] = useState<string>('');
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
+  const [isHowToPlayOpen, setIsHowToPlayOpen] = useState<boolean>(false);
+  const [isDeployGuideOpen, setIsDeployGuideOpen] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<SolanaTransactionRecord[]>([]);
 
   useEffect(() => {
@@ -77,6 +81,8 @@ export default function Home() {
       {/* Global Header */}
       <Header
         onOpenInspector={() => setIsInspectorOpen(true)}
+        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
+        onOpenDeployGuide={() => setIsDeployGuideOpen(true)}
         txCount={transactions.length}
         inGameCoins={inGameCoins}
         onBalanceUpdate={setSolBalance}
@@ -256,6 +262,19 @@ export default function Home() {
         transactions={transactions}
       />
 
+      <HowToPlayModal
+        isOpen={isHowToPlayOpen}
+        onClose={() => setIsHowToPlayOpen(false)}
+        onStartPractice={() => {
+          setActiveTab('PLAY');
+        }}
+      />
+
+      <DevnetDeployModal
+        isOpen={isDeployGuideOpen}
+        onClose={() => setIsDeployGuideOpen(false)}
+      />
+
       {/* Footer */}
       <footer className="border-t border-zinc-900 bg-zinc-950 py-4 px-4 text-center text-xs text-zinc-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
@@ -263,12 +282,23 @@ export default function Home() {
             CYBER NOVA • Powered by <span className="text-cyan-400 font-bold">Solana Devnet</span> for the MLH Solana Hackathon
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <span>Gaming • AI • DeFi • Beginner • Top 3</span>
             <button
-              onClick={() => setIsInspectorOpen(true)}
+              onClick={() => setIsHowToPlayOpen(true)}
               className="text-cyan-400 hover:underline"
             >
-              Open Solana Inspector
+              How to Play Guide
+            </button>
+            <button
+              onClick={() => setIsDeployGuideOpen(true)}
+              className="text-emerald-400 hover:underline"
+            >
+              Deploy on Devnet
+            </button>
+            <button
+              onClick={() => setIsInspectorOpen(true)}
+              className="text-purple-400 hover:underline"
+            >
+              Solana Inspector
             </button>
           </div>
         </div>

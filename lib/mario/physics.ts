@@ -272,13 +272,16 @@ export function updateGamePhysics(
   }
 
   // 10. Enemies Interactions
-  updateEnemies(player, level, output, particles, scorePopups);
+  updateEnemies(player, level, output, particles, scorePopups, titanWaves);
 
   // 11. PowerUp Entities
   updatePowerUps(player, level, powerUps, output);
 
   // 12. Plasma Bolts
   updatePlasmaBolts(plasmaBolts, level, player, output, particles);
+
+  // 12b. Titan Plasma Waves
+  updateTitanWaves(titanWaves, player);
 
   // 13. Kinetic Launchpad Check
   const footTileX = Math.floor((player.x + player.w / 2) / TILE_SIZE);
@@ -475,7 +478,8 @@ function updateEnemies(
   level: LevelConfig,
   output: PhysicsTickOutput,
   particles: Particle[],
-  scorePopups: ScorePopup[]
+  scorePopups: ScorePopup[],
+  titanWaves: TitanPlasmaWave[]
 ) {
   for (const enemy of level.enemies) {
     if (enemy.state === 'terminated') continue;
@@ -492,7 +496,19 @@ function updateEnemies(
     if (enemy.vy > MAX_FALL_SPEED) enemy.vy = MAX_FALL_SPEED;
 
     if (enemy.type === 'macro_titan') {
-      enemy.attackTimer = (enemy.attackTimer || 60) - 1;
+      enemy.attackTimer = (enemy.attackTimer || 120) - 1;
+      if (enemy.attackTimer <= 0) {
+        enemy.attackTimer = 130 + Math.floor(Math.random() * 40);
+        titanWaves.push({
+          id: `tw_${Date.now()}_${Math.random()}`,
+          x: enemy.x - 8,
+          y: enemy.y + 20,
+          vx: -4.2,
+          vy: 0,
+          active: true,
+        });
+        sounds.playFireball();
+      }
       if (Math.random() < 0.015 && enemy.vy === 0) {
         enemy.vy = -7.5;
       }
@@ -691,16 +707,59 @@ function updatePlasmaBolts(
       const fRect = { x: bolt.x, y: bolt.y, w: bolt.w, h: bolt.h };
 
       if (rectIntersect(fRect, eRect)) {
-        enemy.state = 'terminated';
-        output.scoreGained += 200;
-        sounds.playKick();
-        bolt.active = false;
+        if (enemy.type === 'macro_titan') {
+          bolt.active = false;
+          if (enemy.health && enemy.health > 1) {
+            enemy.health--;
+            sounds.playKick();
+            output.scoreGained += 200;
+          } else {
+            enemy.state = 'terminated';
+            sounds.playBossDefeat();
+            output.bossDefeated = true;
+            output.scoreGained += 2500;
+          }
+        } else {
+          enemy.state = 'terminated';
+          output.scoreGained += 200;
+          sounds.playKick();
+          bolt.active = false;
+        }
         break;
       }
     }
 
     if (bolt.bounces > 4 || !bolt.active || bolt.y > level.heightTiles * TILE_SIZE) {
       plasmaBolts.splice(i, 1);
+    }
+  }
+}
+
+function updateTitanWaves(
+  titanWaves: TitanPlasmaWave[],
+  player: Player
+) {
+  for (let i = titanWaves.length - 1; i >= 0; i--) {
+    const wave = titanWaves[i];
+    wave.x += wave.vx;
+
+    // Remove if off screen or inactive
+    if (wave.x < -100 || !wave.active) {
+      titanWaves.splice(i, 1);
+      continue;
+    }
+
+    // Player collision with wave
+    const waveRect = { x: wave.x, y: wave.y, w: 22, h: 16 };
+    const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+    if (rectIntersect(pRect, waveRect)) {
+      if (player.hyperTimer > 0) {
+        wave.active = false;
+        sounds.playKick();
+      } else if (player.invincibleTimer <= 0) {
+        wave.active = false;
+        handlePlayerHit(player);
+      }
     }
   }
 }
