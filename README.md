@@ -9,6 +9,12 @@
 
 ---
 
+## 🎮 Gameplay Preview
+
+![CYBER NOVA Gameplay Preview](public/screenshots/cyber-nova-preview.png)
+
+---
+
 ## 🌌 Original Lore & Character Universe
 
 * **Protagonist:** **NOVA the Sol-Runner** — An agile cybernetic runner with an aerodynamic neon cyan visor, circuit scarf, and chrome mag-thruster boots. Nova traverses corrupted blockchain subnets to recover stolen genesis shards.

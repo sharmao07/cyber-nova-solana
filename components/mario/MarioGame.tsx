@@ -671,21 +671,21 @@ export default function MarioGame({
   return (
     <div className="w-full flex flex-col items-center">
       {/* Retro Cyber Arcade Frame */}
-      <div className="w-full max-w-4xl bg-gradient-to-b from-zinc-900 to-zinc-950 border-4 border-zinc-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
-        {/* Top Header Marquee */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 bg-zinc-950/80 border border-zinc-800/80 px-4 py-2.5 rounded-xl font-mono text-xs text-white">
+      <div className="w-full max-w-4xl bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+        {/* Top HUD Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 bg-zinc-900/60 border border-zinc-800/80 px-4 py-2 rounded-xl font-mono text-xs text-white">
           <div className="flex items-center gap-6">
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Runner</div>
-              <div className="font-black text-cyan-400 tracking-wider">NOVA</div>
+              <div className="text-[10px] text-zinc-500 font-medium">Runner</div>
+              <div className="font-bold text-cyan-400">NOVA</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Energy Score</div>
-              <div className="font-bold text-white tracking-widest">{score.toString().padStart(6, '0')}</div>
+              <div className="text-[10px] text-zinc-500 font-medium">Score</div>
+              <div className="font-semibold text-white tracking-wider tabular-nums">{score.toString().padStart(6, '0')}</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Energy Shards</div>
-              <div className="font-bold text-emerald-400 flex items-center gap-1">
+              <div className="text-[10px] text-zinc-500 font-medium">Shards</div>
+              <div className="font-semibold text-emerald-400 flex items-center gap-1 tabular-nums">
                 <Zap className="w-3.5 h-3.5 text-emerald-400" />
                 <span>x{shards.toString().padStart(2, '0')}</span>
               </div>
@@ -694,27 +694,33 @@ export default function MarioGame({
 
           <div className="flex items-center gap-6">
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Subnet Sector</div>
-              <div className="font-black text-emerald-400 tracking-wider">{currentWorldId}</div>
+              <div className="text-[10px] text-zinc-500 font-medium">Sector</div>
+              <div className="font-semibold text-zinc-200">{currentWorldId}</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Shields</div>
+              <div className="text-[10px] text-zinc-500 font-medium">Shields</div>
               <div className="font-bold text-cyan-400">{'⚡'.repeat(lives)}</div>
             </div>
-            <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Active Buffs</div>
-              <div className="flex items-center gap-1 text-[11px] text-emerald-300">
-                {stakingPerks.shardMagnet && <span title="Shard Magnet">🧲</span>}
-                {stakingPerks.superJump && <span title="Super Mag-Jump">🚀</span>}
-                {stakingPerks.shardBonusPercent > 0 && <span title="Shard Yield">+{stakingPerks.shardBonusPercent}%</span>}
-                {!stakingPerks.shardMagnet && !stakingPerks.superJump && <span className="text-zinc-600">None</span>}
+            {isPracticeMode ? (
+              <div className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                Practice Mode
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="text-[10px] text-zinc-500 font-medium">Buffs</div>
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400">
+                  {stakingPerks.shardMagnet && <span title="Shard Magnet">🧲</span>}
+                  {stakingPerks.superJump && <span title="Super Mag-Jump">🚀</span>}
+                  {stakingPerks.shardBonusPercent > 0 && <span>+{stakingPerks.shardBonusPercent}%</span>}
+                  {!stakingPerks.shardMagnet && !stakingPerks.superJump && <span className="text-zinc-600">None</span>}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Canvas Game Area with CRT scanline effect */}
-        <div className="relative w-full aspect-[800/480] bg-black rounded-xl overflow-hidden border-2 border-zinc-800 shadow-inner">
+        <div className="relative w-full aspect-[800/480] bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-inner">
           <canvas
             ref={canvasRef}
             width={800}
@@ -730,10 +736,10 @@ export default function MarioGame({
 
           {/* AI Autopilot Live Telemetry HUD */}
           {isAiAutopilot && aiTelemetry && (
-            <div className="absolute top-3 left-3 bg-zinc-950/90 border border-cyan-500/50 backdrop-blur-md px-3 py-2 rounded-lg font-mono text-[11px] shadow-lg max-w-sm pointer-events-none z-10">
+            <div className="absolute top-3 left-3 bg-zinc-950/90 border border-cyan-500/40 backdrop-blur-md px-3 py-2 rounded-lg font-mono text-[11px] shadow-lg max-w-sm pointer-events-none z-10">
               <div className="flex items-center gap-2 text-cyan-400 font-bold mb-1">
-                <Bot className="w-3.5 h-3.5 animate-pulse" />
-                <span>A.R.I.A. AUTONOMOUS RUNNER COPILOT</span>
+                <Bot className="w-3.5 h-3.5" />
+                <span>A.R.I.A. COPILOT</span>
                 <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.2 rounded text-cyan-300">
                   {Math.round(aiTelemetry.confidence * 100)}% Conf
                 </span>
@@ -749,126 +755,115 @@ export default function MarioGame({
           )}
         </div>
 
-        {/* Sector Toolbar */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 bg-zinc-950/70 border border-zinc-800 p-2 rounded-xl">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-mono text-zinc-500 px-2">Sectors:</span>
+        {/* Unified Sector & Controls Toolbar */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2.5 bg-zinc-900/60 border border-zinc-800/80 p-2 rounded-xl text-xs font-mono">
+          {/* Sector Segmented Bar */}
+          <div className="flex flex-wrap items-center gap-1 bg-zinc-950/80 p-1 rounded-lg border border-zinc-800">
+            <span className="text-[11px] text-zinc-500 px-2 font-medium">Sector</span>
             <button
               onClick={() => loadLevel('1-1')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
-                currentWorldId === '1-1' 
-                  ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20' 
-                  : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                currentWorldId === '1-1'
+                  ? 'bg-zinc-800 text-white font-semibold shadow-sm' 
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               1-1 Genesis
             </button>
             <button
               onClick={() => loadLevel('1-2')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
                 currentWorldId === '1-2' 
-                  ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20' 
-                  : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+                  ? 'bg-zinc-800 text-white font-semibold shadow-sm' 
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               1-2 Mempool
             </button>
             <button
               onClick={() => loadLevel('1-3')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
                 currentWorldId === '1-3' 
-                  ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20' 
-                  : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+                  ? 'bg-zinc-800 text-white font-semibold shadow-sm' 
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               1-3 Skyway
             </button>
             <button
               onClick={() => loadLevel('1-4')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
                 currentWorldId === '1-4' 
-                  ? 'bg-red-500 text-zinc-950 shadow-md shadow-red-500/20' 
-                  : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+                  ? 'bg-red-500/20 text-red-300 font-semibold border border-red-500/30 shadow-sm' 
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              1-4 Titan Citadel
+              1-4 Citadel
             </button>
             <button
               onClick={() => loadLevel('AI-MATRIX', customLevelPrompt)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition ${
                 currentWorldId === 'AI-MATRIX' 
-                  ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' 
-                  : 'bg-zinc-900 text-purple-300 hover:bg-zinc-800'
+                  ? 'bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30 shadow-sm' 
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3 h-3 text-purple-400" />
               <span>AI Matrix</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Mode Toggles & Shortcuts */}
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setIsAiAutopilot(!isAiAutopilot)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition border ${
                 isAiAutopilot 
-                  ? 'bg-cyan-500 text-zinc-950 shadow-lg shadow-cyan-500/30' 
-                  : 'bg-zinc-900 border border-cyan-500/40 text-cyan-400 hover:bg-zinc-800'
+                  ? 'bg-cyan-500 text-zinc-950 border-cyan-400 font-bold' 
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
               }`}
             >
-              <Bot className="w-4 h-4" />
-              <span>{isAiAutopilot ? 'AI Copilot: ON' : 'AI Copilot: OFF'}</span>
+              <Bot className="w-3.5 h-3.5" />
+              <span>{isAiAutopilot ? 'AI Autopilot' : 'Manual'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsPracticeMode(!isPracticeMode)}
+              title="Invulnerable mode for testing"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition border ${
+                isPracticeMode
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <span>Practice: {isPracticeMode ? 'ON' : 'OFF'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsHowToPlayOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
+            >
+              Guide
             </button>
 
             <button
               onClick={() => setHasCrtEffect(!hasCrtEffect)}
               title="Toggle CRT scanlines"
-              className={`p-2 rounded-lg text-xs font-mono transition ${
-                hasCrtEffect ? 'bg-zinc-800 text-emerald-400' : 'bg-zinc-900 text-zinc-500'
+              className={`p-1.5 rounded-lg border transition ${
+                hasCrtEffect ? 'bg-zinc-800 border-zinc-700 text-emerald-400' : 'bg-zinc-900 border-zinc-800 text-zinc-500'
               }`}
             >
-              <Tv className="w-4 h-4" />
+              <Tv className="w-3.5 h-3.5" />
             </button>
 
             <button
               onClick={() => loadLevel(currentWorldId)}
               title="Restart Sector"
-              className="p-2 rounded-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+              className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-
-        {/* Quick Guide & Mode Shortcuts Bar */}
-        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 px-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setIsHowToPlayOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 font-bold text-xs transition shadow-sm hover:shadow-cyan-500/20"
-            >
-              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>🎮 How to Play / Demo Guide</span>
-            </button>
-
-            <button
-              onClick={() => setIsDeployModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition shadow-sm hover:shadow-emerald-500/20"
-            >
-              <Rocket className="w-3.5 h-3.5 text-emerald-400" />
-              <span>🚀 Deploy on Devnet</span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => setIsPracticeMode(!isPracticeMode)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs transition border ${
-              isPracticeMode
-                ? 'bg-amber-500 text-zinc-950 border-amber-400 shadow-md shadow-amber-500/25'
-                : 'bg-zinc-900/80 border-zinc-700 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <span>🛡️ Practice Mode: {isPracticeMode ? 'ACTIVE (Invulnerable)' : 'OFF'}</span>
-          </button>
         </div>
 
         {/* Mobile Touch Controls */}

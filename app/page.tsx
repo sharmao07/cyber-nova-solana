@@ -89,101 +89,101 @@ export default function Home() {
       />
 
       {/* Navigation Tabs Bar */}
-      <div className="border-b border-zinc-800 bg-zinc-950 px-4">
-        <div className="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto py-2.5 text-xs no-scrollbar">
+      <div className="border-b border-zinc-800/80 bg-zinc-950 px-4 py-2">
+        <div className="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
           <button
             onClick={() => setActiveTab('PLAY')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'PLAY'
-                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Gamepad2 className="w-4 h-4" />
-            <span>Play Nova (60fps)</span>
+            <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Arcade (60 FPS)</span>
           </button>
 
           <button
             onClick={() => setActiveTab('SWAP')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'SWAP'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <ArrowDownUp className="w-4 h-4" />
-            <span>Quantum Swap (AMM DEX)</span>
+            <ArrowDownUp className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Quantum Swap</span>
           </button>
 
           <button
             onClick={() => setActiveTab('STAKE')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'STAKE'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Zap className="w-4 h-4" />
-            <span>Solar Staking (18.5% APY)</span>
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Solar Staking</span>
           </button>
 
           <button
             onClick={() => setActiveTab('WAGER')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'WAGER'
-                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Flame className="w-4 h-4" />
-            <span>Speedrun Wager Escrow</span>
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>Wager Escrow</span>
           </button>
 
           <button
             onClick={() => setActiveTab('SHOP')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'SHOP'
-                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
-            <span>Chassis & Powerup Terminal</span>
+            <ShoppingBag className="w-3.5 h-3.5 text-purple-400" />
+            <span>Chassis Shop</span>
           </button>
 
           <button
             onClick={() => setActiveTab('LEADERBOARD')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'LEADERBOARD'
-                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Trophy className="w-4 h-4" />
-            <span>On-Chain Leaderboard</span>
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>Leaderboard</span>
           </button>
 
           <button
             onClick={() => setActiveTab('AI_ARCHITECT')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'AI_ARCHITECT'
-                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
-                : 'text-purple-400 hover:text-purple-300 hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
-            <span>AI Matrix Architect</span>
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>AI Matrix Lab</span>
           </button>
 
           <button
             onClick={() => setActiveTab('ORACLE_TOAD')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
               activeTab === 'ORACLE_TOAD'
-                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
-                : 'text-cyan-400 hover:text-cyan-300 hover:bg-zinc-900'
+                ? 'bg-zinc-800 text-white border border-zinc-700 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
             }`}
           >
-            <Bot className="w-4 h-4" />
+            <Bot className="w-3.5 h-3.5 text-cyan-400" />
             <span>A.R.I.A. Copilot</span>
           </button>
         </div>

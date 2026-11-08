@@ -112,56 +112,49 @@ export default function Header({
     : 'Connecting...';
 
   return (
-    <header className="border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Brand / Title */}
+    <header className="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-50 px-4 py-2.5 font-mono">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 via-emerald-400 to-purple-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-            <div className="w-full h-full bg-zinc-950 rounded-[7px] flex items-center justify-center text-xl text-cyan-400">
-              ⚡
-            </div>
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-700/80 flex items-center justify-center text-cyan-400 text-sm font-bold shadow-inner">
+            ⚡
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-base font-black tracking-wider text-white">
-                CYBER <span className="text-cyan-400">NOVA</span>
-              </span>
-              <span className="text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                Solana Devnet
-              </span>
-            </div>
-            <p className="text-[11px] text-zinc-400 hidden sm:block">
-              Sol-Runner Cyber-Platformer • Autonomous AI • DeFi AMM & Staking
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold tracking-wider text-white">
+              CYBER <span className="text-cyan-400">NOVA</span>
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider bg-zinc-900 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+              Devnet
+            </span>
           </div>
         </div>
 
-        {/* Live Solana Network Stats */}
-        <div className="hidden lg:flex items-center gap-4 bg-zinc-900/80 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-mono text-zinc-300">
+        {/* Live Network Health (Muted, Calm) */}
+        <div className="hidden lg:flex items-center gap-3 bg-zinc-900/60 border border-zinc-800/80 px-3 py-1 rounded-lg text-[11px] text-zinc-400">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-zinc-500">TPS:</span>
-            <span className="font-semibold text-emerald-400">{cluster?.tps?.toLocaleString() || '2,480'}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-zinc-500">TPS</span>
+            <span className="font-semibold text-zinc-200">{cluster?.tps?.toLocaleString() || '2,480'}</span>
           </div>
-          <div className="h-3 w-px bg-zinc-800" />
+          <span className="text-zinc-700">•</span>
           <div className="flex items-center gap-1">
-            <span className="text-zinc-500">Slot:</span>
-            <span>{cluster?.slot ? `#${cluster.slot}` : 'Loading...'}</span>
+            <span className="text-zinc-500">Slot</span>
+            <span className="text-zinc-300">#{cluster?.slot || '...'}</span>
           </div>
-          <div className="h-3 w-px bg-zinc-800" />
+          <span className="text-zinc-700">•</span>
           <div className="flex items-center gap-1">
-            <span className="text-zinc-500">Latency:</span>
-            <span className="text-amber-400">{cluster?.latencyMs || 120}ms</span>
+            <span className="text-zinc-500">Latency</span>
+            <span className="text-zinc-300">{cluster?.latencyMs || 120}ms</span>
           </div>
         </div>
 
         {/* User Balance & Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Energy Shards Counter */}
-          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-emerald-300">
-            <Zap className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+        <div className="flex items-center gap-2">
+          {/* Energy Shards */}
+          <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-400">
+            <Zap className="w-3.5 h-3.5 text-emerald-400" />
             <span>{inGameCoins}</span>
-            <span className="text-[10px] text-emerald-400/80">$SHARD</span>
+            <span className="text-[10px] text-zinc-500 font-normal">$SHARD</span>
           </div>
 
           {/* Devnet SOL Wallet Card */}
@@ -169,79 +162,78 @@ export default function Header({
             <button
               onClick={copyAddress}
               title="Click to copy public address"
-              className="flex items-center gap-1.5 text-xs font-mono text-zinc-300 hover:text-white transition"
+              className="flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white transition"
             >
               <Wallet className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{shortAddr}</span>
+              <span className="hidden sm:inline">{shortAddr}</span>
               {copied ? (
                 <Check className="w-3 h-3 text-emerald-400" />
               ) : (
                 <Copy className="w-3 h-3 text-zinc-500 hover:text-zinc-300" />
               )}
             </button>
-            <div className="h-4 w-px bg-zinc-800" />
-            <span className="text-xs font-mono font-semibold text-emerald-400">
-              {balance.toFixed(3)} SOL
+            <div className="h-3.5 w-px bg-zinc-800" />
+            <span className="text-xs font-semibold text-white">
+              {balance.toFixed(2)} SOL
             </span>
           </div>
-
-          {/* How to Play Guide Shortcut */}
-          {onOpenHowToPlay && (
-            <button
-              onClick={onOpenHowToPlay}
-              title="Open CYBER NOVA Game Guide & Controls"
-              className="hidden lg:flex items-center gap-1.5 bg-zinc-900 border border-cyan-500/40 hover:border-cyan-400 px-2.5 py-1.5 rounded-lg text-xs font-mono text-cyan-300 transition"
-            >
-              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Guide</span>
-            </button>
-          )}
-
-          {/* Devnet Deploy Guide Shortcut */}
-          {onOpenDeployGuide && (
-            <button
-              onClick={onOpenDeployGuide}
-              title="Open Solana Devnet Deployment Guide"
-              className="hidden xl:flex items-center gap-1.5 bg-zinc-900 border border-emerald-500/40 hover:border-emerald-400 px-2.5 py-1.5 rounded-lg text-xs font-mono text-emerald-300 transition"
-            >
-              <Rocket className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Deploy</span>
-            </button>
-          )}
 
           {/* 1-Click Devnet Faucet Button */}
           <button
             onClick={handleAirdrop}
             disabled={isAirdropping}
             title="Instant 1-Click Airdrop of 0.5 Devnet SOL from funded treasury"
-            className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-md shadow-cyan-500/20 disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-zinc-950 font-bold px-3 py-1 rounded-lg text-xs transition disabled:opacity-50"
           >
             <Zap className={`w-3.5 h-3.5 ${isAirdropping ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Airdrop</span>
             <span>+0.5 SOL</span>
+          </button>
+
+          {/* Guide Shortcuts */}
+          {onOpenHowToPlay && (
+            <button
+              onClick={onOpenHowToPlay}
+              title="Open CYBER NOVA Game Guide & Controls"
+              className="hidden md:flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-1 rounded-lg text-xs text-zinc-300 hover:text-white transition"
+            >
+              <Gamepad2 className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Guide</span>
+            </button>
+          )}
+
+          {onOpenDeployGuide && (
+            <button
+              onClick={onOpenDeployGuide}
+              title="Open Solana Devnet Deployment Guide"
+              className="hidden md:flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-1 rounded-lg text-xs text-zinc-300 hover:text-white transition"
+            >
+              <Rocket className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Deploy</span>
+            </button>
+          )}
+
+          {/* Solana Inspector Button */}
+          <button
+            onClick={onOpenInspector}
+            title="Open Solana Inspector (ELI5 Mode)"
+            className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-2.5 py-1 rounded-lg text-xs text-zinc-300 hover:text-white transition"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Inspector</span>
+            {txCount > 0 && (
+              <span className="bg-zinc-800 text-zinc-200 font-bold text-[10px] px-1.5 py-0.2 rounded-full border border-zinc-700">
+                {txCount}
+              </span>
+            )}
           </button>
 
           {/* Audio Mute Toggle */}
           <button
             onClick={handleToggleSound}
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition"
+            className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
-          </button>
-
-          {/* Solana Inspector Button */}
-          <button
-            onClick={onOpenInspector}
-            className="relative flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 hover:border-emerald-500 px-2.5 py-1.5 rounded-lg text-xs font-mono text-zinc-200 transition"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="hidden md:inline">Inspector</span>
-            {txCount > 0 && (
-              <span className="bg-emerald-500 text-zinc-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">
-                {txCount}
-              </span>
-            )}
           </button>
         </div>
       </div>
