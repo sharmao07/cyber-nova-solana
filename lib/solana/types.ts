@@ -1,65 +1,28 @@
-export type MoveType = 
-  | 'ATTACK' 
-  | 'HEAVY_STRIKE' 
-  | 'SHIELD_BLOCK' 
-  | 'LIGHTNING_BOLT' 
-  | 'HEAL_POTION';
-
-export interface CombatStats {
-  hp: number;
-  maxHp: number;
-  shield: number;
-  energy: number;
-  maxEnergy: number;
-  attackPower: number;
-  defense: number;
-}
-
 export interface InventoryItem {
   id: string;
   name: string;
-  category: 'WEAPON' | 'ARMOR' | 'POTION' | 'RELIC';
-  rarity: 'COMMON' | 'RARE' | 'MYTHIC';
+  category: 'POWERUP' | 'SKIN' | 'RELIC';
+  rarity: 'COMMON' | 'RARE' | 'LEGENDARY';
   description: string;
-  statBoost: {
-    attack?: number;
-    defense?: number;
-    energy?: number;
-    hp?: number;
-  };
-  supply: number;
-  basePrice: number; // in SOL
-  currentPrice: number; // calculated via bonding curve
-}
-
-export interface GladiatorState {
-  address: string;
-  name: string;
-  avatar: string;
-  stats: CombatStats;
-  inventory: InventoryItem[];
-  isAi: boolean;
-}
-
-export interface CombatLogEntry {
-  id: string;
-  round: number;
-  actor: 'PLAYER' | 'AI_AGENT';
-  actorName: string;
-  move: MoveType;
-  damage: number;
-  absorbed: number;
-  isCrit: boolean;
-  message: string;
-  aiMonologue?: string;
-  signature?: string;
-  solscanUrl?: string;
-  timestamp: number;
+  priceSol: number;
+  priceCoins: number;
+  imageUrl?: string;
+  isEquipped?: boolean;
 }
 
 export interface SolanaTransactionRecord {
   signature: string;
-  type: 'AIRDROP' | 'MATCH_ESCROW' | 'PLAYER_TURN' | 'AI_AGENT_TURN' | 'MATCH_PAYOUT' | 'AMM_BUY' | 'AMM_SELL' | 'STAKE_DEPOSIT' | 'STAKE_CLAIM';
+  type: 
+    | 'AIRDROP' 
+    | 'SPEEDRUN_ATTESTATION' 
+    | 'AI_AGENT_ATTESTATION'
+    | 'AMM_SWAP_BUY' 
+    | 'AMM_SWAP_SELL' 
+    | 'WAGER_ESCROW_LOCK' 
+    | 'WAGER_ESCROW_PAYOUT' 
+    | 'STAKE_DEPOSIT' 
+    | 'STAKE_CLAIM' 
+    | 'ITEM_MINT';
   title: string;
   description: string;
   amountSol?: number;
@@ -78,8 +41,28 @@ export interface SolanaTransactionRecord {
 export interface StakingVaultState {
   totalVaultStaked: number; // in SOL
   userStaked: number; // in SOL
-  apyPercent: number; // e.g. 14.8
+  apyPercent: number; // e.g. 18.5
   accruedYield: number; // in SOL
   lastStakeTimestamp: number;
   totalRewardsDistributed: number;
+}
+
+export interface AmmPoolState {
+  solReserve: number;    // e.g. 15.0 SOL
+  coinReserve: number;   // e.g. 150,000 $COIN
+  totalVolumeSol: number;
+  lpFeePercent: number;  // 0.3%
+}
+
+export interface SpeedrunLeaderboardEntry {
+  id: string;
+  playerAddress: string;
+  world: string;
+  timeSeconds: number;
+  coins: number;
+  score: number;
+  isAiAgent: boolean;
+  signature: string;
+  solscanUrl: string;
+  timestamp: number;
 }

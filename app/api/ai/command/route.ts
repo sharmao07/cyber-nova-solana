@@ -4,66 +4,53 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt } = await req.json();
     if (!prompt) {
-      return NextResponse.json({ error: 'Prompt required' }, { status: 400 });
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
     const clean = prompt.toLowerCase();
 
-    // Semantic Intent Classifier
-    if (clean.includes('lightning') || clean.includes('zap') || clean.includes('shock') || clean.includes('thunder') || clean.includes('magic')) {
+    // Natural Language intent classification for Oracle Toad
+    if (clean.includes('airdrop') || clean.includes('faucet') || clean.includes('sol')) {
       return NextResponse.json({
-        move: 'LIGHTNING_BOLT',
+        action: 'AIRDROP',
+        confidence: 0.98,
+        reply: '⚡ Airdrop request initiated! I’ve triggered your instant 0.5 Devnet SOL disbursement directly from our funded treasury keypair.',
+      });
+    }
+
+    if (clean.includes('swap') || clean.includes('dex') || clean.includes('coin')) {
+      return NextResponse.json({
+        action: 'SWAP',
+        confidence: 0.95,
+        reply: '🍄 Opening Mushroom Swap AMM! You can exchange your in-game coins collected from breaking blocks directly into real Devnet SOL with 0.3% LP fees.',
+      });
+    }
+
+    if (clean.includes('stake') || clean.includes('yield') || clean.includes('farm')) {
+      return NextResponse.json({
+        action: 'STAKE',
         confidence: 0.96,
-        explanation: 'AI detected spellcasting intent. Preparing high-yield ionic lightning discharge.',
-        energyCost: 40,
-        estimatedDamage: 38,
-        suggestedDialogue: 'Executing ionic conduit! 38 magical damage ready to sign on-chain.',
+        reply: '🌱 Staking in Yoshi’s Farm earns 18.5% streaming APY and immediately grants you the Coin Magnet aura and Super Jump perk in Mario!',
       });
     }
 
-    if (clean.includes('shield') || clean.includes('block') || clean.includes('defend') || clean.includes('protect') || clean.includes('barrier') || clean.includes('guard')) {
+    if (clean.includes('bowser') || clean.includes('boss') || clean.includes('castle') || clean.includes('1-4')) {
       return NextResponse.json({
-        move: 'SHIELD_BLOCK',
-        confidence: 0.95,
-        explanation: 'AI detected defensive strategy. Preparing crystalline energy barrier (+45 Shield).',
-        energyCost: 20,
-        estimatedDamage: 0,
-        suggestedDialogue: 'Defensive parameters established. Fortifying shield matrix.',
-      });
-    }
-
-    if (clean.includes('heavy') || clean.includes('crush') || clean.includes('smash') || clean.includes('hard') || clean.includes('all out') || clean.includes('slam')) {
-      return NextResponse.json({
-        move: 'HEAVY_STRIKE',
+        action: 'BOSS_GUIDE',
         confidence: 0.94,
-        explanation: 'AI detected high-impact kinetic intent. Preparing heavy sunder strike.',
-        energyCost: 30,
-        estimatedDamage: 30,
-        suggestedDialogue: 'Overcharging pneumatic strike actuators. High crit probability.',
+        reply: '🏰 Pro tip for World 1-4: Bowser periodically leaps into the air. Time your dash to run under his jump or sprint along the upper brick ledge to hit the Golden Solana Axe, collapsing the bridge into the lava pit!',
       });
     }
 
-    if (clean.includes('heal') || clean.includes('potion') || clean.includes('repair') || clean.includes('recover') || clean.includes('health') || clean.includes('nanite')) {
-      return NextResponse.json({
-        move: 'HEAL_POTION',
-        confidence: 0.95,
-        explanation: 'AI detected recovery command. Administering nanite bio-repair (+40 HP).',
-        energyCost: 25,
-        estimatedDamage: 0,
-        suggestedDialogue: 'Bio-restoration authorized. Injecting emergency medical nanites.',
-      });
-    }
-
-    // Default basic attack
     return NextResponse.json({
-      move: 'ATTACK',
+      action: 'GENERAL',
       confidence: 0.88,
-      explanation: 'AI detected standard attack command. Preparing rapid kinetic salvo (+15 Energy gain).',
-      energyCost: 0,
-      estimatedDamage: 18,
-      suggestedDialogue: 'Rapid assault vector computed. Firing baseline plasma salvo.',
+      reply: `✨ Oracle Toad analyzed your query: "${prompt}". Try asking about Airdrops, AMM Swaps, Staking perks, or Bowser boss tips!`,
     });
   } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Parser error' }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Parser error' },
+      { status: 500 }
+    );
   }
 }

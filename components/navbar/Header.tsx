@@ -1,236 +1,229 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  ShieldAlert, 
+  getOrCreateBurnerWallet, 
+  requestDevnetAirdrop, 
+  BurnerWallet 
+} from '@/lib/solana/burner-wallet';
+import { 
+  fetchClusterStatus, 
+  getAccountBalance, 
+  ClusterStatus 
+} from '@/lib/solana/connection';
+import { sounds } from '@/lib/audio/sound-effects';
+import { 
+  Zap, 
+  Wallet, 
   Volume2, 
   VolumeX, 
+  RefreshCw, 
+  ShieldCheck, 
+  ExternalLink, 
   Coins, 
-  Terminal, 
-  Copy, 
-  Check, 
-  RefreshCw,
-  Sparkles,
-  ExternalLink
+  Activity,
+  Copy,
+  Check
 } from 'lucide-react';
-import { BurnerWallet, getOrCreateBurnerWallet, requestDevnetAirdrop } from '@/lib/solana/burner-wallet';
-import { fetchClusterStatus, getAccountBalance, ClusterStatus } from '@/lib/solana/connection';
-import { sounds } from '@/lib/audio/sound-effects';
 
 interface HeaderProps {
-  onToggleInspector: () => void;
-  inspectorOpen: boolean;
+  onOpenInspector: () => void;
   txCount: number;
-  balance: number;
-  setBalance: React.Dispatch<React.SetStateAction<number>>;
-  wallet: BurnerWallet | null;
-  setWallet: React.Dispatch<React.SetStateAction<BurnerWallet | null>>;
-  activeTab: 'arena' | 'amm' | 'vault';
-  setActiveTab: (tab: 'arena' | 'amm' | 'vault') => void;
+  inGameCoins: number;
+  onBalanceUpdate?: (bal: number) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  onToggleInspector,
-  inspectorOpen,
+export default function Header({
+  onOpenInspector,
   txCount,
-  balance,
-  setBalance,
-  wallet,
-  setWallet,
-  activeTab,
-  setActiveTab,
-}) => {
+  inGameCoins,
+  onBalanceUpdate,
+}: HeaderProps) {
+  const [wallet, setWallet] = useState<BurnerWallet | null>(null);
+  const [balance, setBalance] = useState<number>(0);
   const [cluster, setCluster] = useState<ClusterStatus | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [isAirdropping, setIsAirdropping] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isAirdropping, setIsAirdropping] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    // Initial wallet
     const w = getOrCreateBurnerWallet();
     setWallet(w);
 
-    // Initial cluster status
+    // Initial balance & cluster status
+    getAccountBalance(w.publicKeyBase58).then(bal => {
+      setBalance(bal);
+      if (onBalanceUpdate) onBalanceUpdate(bal);
+    });
+
     fetchClusterStatus().then(setCluster);
-    const clusterInterval = setInterval(() => {
+
+    // Check audio mute state
+    setIsMuted(sounds.isMuted);
+
+    // Refresh telemetry every 15s
+    const interval = setInterval(() => {
       fetchClusterStatus().then(setCluster);
+      if (w) {
+        getAccountBalance(w.publicKeyBase58).then(bal => {
+          setBalance(bal);
+          if (onBalanceUpdate) onBalanceUpdate(bal);
+        });
+      }
     }, 15000);
 
-    return () => clearInterval(clusterInterval);
-  }, [setWallet]);
-
-  useEffect(() => {
-    if (wallet) {
-      getAccountBalance(wallet.publicKeyBase58).then(setBalance);
-    }
-  }, [wallet, setBalance]);
-
-  const handleCopy = () => {
-    if (!wallet) return;
-    navigator.clipboard.writeText(wallet.publicKeyBase58);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    return () => clearInterval(interval);
+  }, []);
 
   const handleAirdrop = async () => {
     if (!wallet || isAirdropping) return;
     setIsAirdropping(true);
     sounds.playCoin();
 
-    const res = await requestDevnetAirdrop(wallet.publicKeyBase58, 0.5);
-    if (res.success) {
-      setTimeout(async () => {
-        const newBal = await getAccountBalance(wallet.publicKeyBase58);
-        setBalance(newBal);
-        setIsAirdropping(false);
-      }, 1500);
-    } else {
+    try {
+      const res = await requestDevnetAirdrop(wallet.publicKeyBase58, 0.5);
+      if (res.success) {
+        // Poll for updated balance
+        setTimeout(async () => {
+          const newBal = await getAccountBalance(wallet.publicKeyBase58);
+          setBalance(newBal);
+          if (onBalanceUpdate) onBalanceUpdate(newBal);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error('Airdrop failed:', err);
+    } finally {
       setIsAirdropping(false);
     }
   };
 
-  const toggleSound = () => {
+  const handleToggleSound = () => {
     const muted = sounds.toggleMute();
     setIsMuted(muted);
+    if (!muted) sounds.playJump();
   };
 
+  const copyAddress = () => {
+    if (!wallet) return;
+    navigator.clipboard.writeText(wallet.publicKeyBase58);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shortAddr = wallet 
+    ? `${wallet.publicKeyBase58.slice(0, 4)}...${wallet.publicKeyBase58.slice(-4)}` 
+    : 'Connecting...';
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-cyan-900/40 bg-black/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Subtitle */}
-          <div className="flex items-center space-x-3">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-600 p-[1px] shadow-lg shadow-cyan-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xl font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-fuchsia-400">
-                  SOLARENA
-                </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800/60">
-                  Devnet
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 tracking-tight hidden sm:block">
-                Autonomous AI Battler & DeFi Coliseum
-              </p>
+    <header className="border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        {/* Brand / Title */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 via-amber-500 to-emerald-400 p-0.5 shadow-lg shadow-red-500/20 flex items-center justify-center">
+            <div className="w-full h-full bg-zinc-950 rounded-[7px] flex items-center justify-center text-xl">
+              🍄
             </div>
           </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-base font-black tracking-wider text-white">
+                SUPER <span className="text-emerald-400">SOLARIO</span>
+              </span>
+              <span className="text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                Solana Devnet
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 hidden sm:block">
+              On-Chain Mario Platformer • Autonomous AI • DeFi AMM & Yield
+            </p>
+          </div>
+        </div>
 
-          {/* Navigation Tabs */}
-          <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-900/80 p-1 rounded-lg border border-slate-800">
-            <button
-              onClick={() => setActiveTab('arena')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'arena'
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-cyan-500/10 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              Coliseum Arena
-            </button>
-            <button
-              onClick={() => setActiveTab('amm')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'amm'
-                  ? 'bg-gradient-to-r from-fuchsia-500/20 to-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/40 shadow-sm shadow-fuchsia-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              AMM Relic Shop
-            </button>
-            <button
-              onClick={() => setActiveTab('vault')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                activeTab === 'vault'
-                  ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              Yield Vault (14.8% APY)
-            </button>
-          </nav>
+        {/* Live Solana Network Stats */}
+        <div className="hidden lg:flex items-center gap-4 bg-zinc-900/80 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-mono text-zinc-300">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-zinc-500">TPS:</span>
+            <span className="font-semibold text-emerald-400">{cluster?.tps?.toLocaleString() || '2,480'}</span>
+          </div>
+          <div className="h-3 w-px bg-zinc-800" />
+          <div className="flex items-center gap-1">
+            <span className="text-zinc-500">Slot:</span>
+            <span>{cluster?.slot ? `#${cluster.slot}` : 'Loading...'}</span>
+          </div>
+          <div className="h-3 w-px bg-zinc-800" />
+          <div className="flex items-center gap-1">
+            <span className="text-zinc-500">Latency:</span>
+            <span className="text-amber-400">{cluster?.latencyMs || 120}ms</span>
+          </div>
+        </div>
 
-          {/* Action Center: Audio, Network & Burner Wallet */}
-          <div className="flex items-center space-x-2">
-            {/* Audio Toggle */}
-            <button
-              onClick={toggleSound}
-              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-              className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
-            >
-              {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
-            </button>
+        {/* User Balance & Actions */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* In-Game $COIN Counter */}
+          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-amber-300">
+            <Coins className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+            <span>{inGameCoins}</span>
+            <span className="text-[10px] text-amber-400/80">$COIN</span>
+          </div>
 
-            {/* Solana Under-the-Hood Inspector Trigger */}
+          {/* Devnet SOL Wallet Card */}
+          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-2.5 py-1 rounded-lg">
             <button
-              onClick={onToggleInspector}
-              className={`relative flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                inspectorOpen
-                  ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300'
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-cyan-500/50'
-              }`}
-              title="Inspect On-Chain Transactions & Solana Architecture"
+              onClick={copyAddress}
+              title="Click to copy public address"
+              className="flex items-center gap-1.5 text-xs font-mono text-zinc-300 hover:text-white transition"
             >
-              <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden md:inline">Solana 101</span>
-              {txCount > 0 && (
-                <span className="flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-cyan-400 text-slate-950">
-                  {txCount}
-                </span>
+              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{shortAddr}</span>
+              {copied ? (
+                <Check className="w-3 h-3 text-emerald-400" />
+              ) : (
+                <Copy className="w-3 h-3 text-zinc-500 hover:text-zinc-300" />
               )}
             </button>
-
-            {/* Burner Wallet Card */}
-            {wallet && (
-              <div className="flex items-center space-x-1.5 bg-slate-900/90 border border-cyan-800/50 rounded-lg p-1.5 pl-2.5">
-                <div className="flex flex-col text-left">
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-[10px] font-mono text-cyan-300 font-semibold">
-                      {wallet.publicKeyBase58.slice(0, 4)}...{wallet.publicKeyBase58.slice(-4)}
-                    </span>
-                    <button
-                      onClick={handleCopy}
-                      title="Copy Address"
-                      className="text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    </button>
-                    <a
-                      href={`https://solscan.io/account/${wallet.publicKeyBase58}?cluster=devnet`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="View on Solscan"
-                      className="text-slate-500 hover:text-cyan-400"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs font-mono font-bold text-emerald-400">
-                      {balance.toFixed(3)} SOL
-                    </span>
-                  </div>
-                </div>
-
-                {/* Instant Airdrop Button */}
-                <button
-                  onClick={handleAirdrop}
-                  disabled={isAirdropping}
-                  title="Airdrop 0.5 Devnet SOL instantly"
-                  className="flex items-center space-x-1 px-2 py-1 rounded bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-slate-950 font-bold text-[11px] transition-all disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isAirdropping ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">+0.5 SOL</span>
-                </button>
-              </div>
-            )}
+            <div className="h-4 w-px bg-zinc-800" />
+            <span className="text-xs font-mono font-semibold text-emerald-400">
+              {balance.toFixed(3)} SOL
+            </span>
           </div>
+
+          {/* 1-Click Devnet Faucet Button */}
+          <button
+            onClick={handleAirdrop}
+            disabled={isAirdropping}
+            title="Instant 1-Click Airdrop of 0.5 Devnet SOL from funded treasury"
+            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-md shadow-emerald-500/20 disabled:opacity-50"
+          >
+            <Zap className={`w-3.5 h-3.5 ${isAirdropping ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Airdrop</span>
+            <span>+0.5 SOL</span>
+          </button>
+
+          {/* Audio Mute Toggle */}
+          <button
+            onClick={handleToggleSound}
+            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          </button>
+
+          {/* Solana Inspector Button */}
+          <button
+            onClick={onOpenInspector}
+            className="relative flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 hover:border-emerald-500 px-2.5 py-1.5 rounded-lg text-xs font-mono text-zinc-200 transition"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="hidden md:inline">Inspector</span>
+            {txCount > 0 && (
+              <span className="bg-emerald-500 text-zinc-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">
+                {txCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </header>
   );
-};
+}

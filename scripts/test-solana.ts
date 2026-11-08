@@ -20,19 +20,19 @@ const TREASURY_SECRET = [
 ];
 
 async function main() {
-  console.log('Connecting to Solana Devnet...');
+  console.log('🍄 Connecting to Solana Devnet for Super Solario test...');
   const connection = new Connection(DEVNET_RPC, 'confirmed');
   const treasury = Keypair.fromSecretKey(Uint8Array.from(TREASURY_SECRET));
 
   const bal = await connection.getBalance(treasury.publicKey);
   console.log(`Treasury Address: ${treasury.publicKey.toBase58()}`);
-  console.log(`Treasury Balance: ${bal / LAMPORTS_PER_SOL} SOL`);
+  console.log(`Treasury Balance: ${(bal / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 
-  // Generate a test burner wallet
+  // Generate test burner wallet
   const testBurner = Keypair.generate();
-  console.log(`Created Test Burner: ${testBurner.publicKey.toBase58()}`);
+  console.log(`Created Test Player Burner: ${testBurner.publicKey.toBase58()}`);
 
-  // Transfer 0.05 SOL with SolArena Memo
+  // Transfer 0.05 SOL with SuperSolario Memo
   const tx = new Transaction();
   tx.add(
     SystemProgram.transfer({
@@ -43,8 +43,12 @@ async function main() {
   );
 
   const memoData = Buffer.from(JSON.stringify({
-    app: 'SolArena',
-    event: 'TEST_VERIFICATION',
+    app: 'SuperSolario',
+    event: 'SPEEDRUN_LEVEL_CLEAR',
+    world: '1-1',
+    timeSeconds: 42.5,
+    coins: 16,
+    score: 8200,
     timestamp: Date.now(),
   }));
 
@@ -56,13 +60,13 @@ async function main() {
     })
   );
 
-  console.log('Broadcasting transaction to Solana Devnet...');
+  console.log('Broadcasting speedrun attestation to Solana Devnet...');
   const sig = await sendAndConfirmTransaction(connection, tx, [treasury]);
   console.log('SUCCESS! Transaction signature:', sig);
   console.log(`Solscan URL: https://solscan.io/tx/${sig}?cluster=devnet`);
 
   const burnerBal = await connection.getBalance(testBurner.publicKey);
-  console.log(`Test Burner Balance: ${burnerBal / LAMPORTS_PER_SOL} SOL`);
+  console.log(`Burner Wallet Balance: ${(burnerBal / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
 }
 
 main().catch(console.error);

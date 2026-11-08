@@ -1,136 +1,278 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Header } from '@/components/navbar/Header';
-import { CombatArena } from '@/components/arena/CombatArena';
-import { BondingCurveShop } from '@/components/defi/BondingCurveShop';
-import { StakingVault } from '@/components/defi/StakingVault';
-import { SolanaInspector } from '@/components/beginner/SolanaInspector';
-import { BurnerWallet } from '@/lib/solana/burner-wallet';
-import { InventoryItem } from '@/lib/solana/types';
+import Header from '@/components/navbar/Header';
+import MarioGame from '@/components/mario/MarioGame';
+import MushroomSwap from '@/components/defi/MushroomSwap';
+import StakingVault from '@/components/defi/StakingVault';
+import WagerEscrow from '@/components/defi/WagerEscrow';
+import ItemShop from '@/components/gaming/ItemShop';
+import Leaderboard from '@/components/gaming/Leaderboard';
+import AiLevelGenerator from '@/components/ai/AiLevelGenerator';
+import OracleToad from '@/components/ai/OracleToad';
+import SolanaInspector from '@/components/beginner/SolanaInspector';
+import { StakingPerks } from '@/lib/mario/types';
 import { getStoredTransactions } from '@/lib/solana/transactions';
-import { ExternalLink, Sparkles, Award } from 'lucide-react';
+import { SolanaTransactionRecord } from '@/lib/solana/types';
+import { 
+  Gamepad2, 
+  ArrowDownUp, 
+  Sprout, 
+  Flame, 
+  ShoppingBag, 
+  Trophy, 
+  Sparkles, 
+  Bot,
+  Zap,
+  Info
+} from 'lucide-react';
 
-const INVENTORY_STORAGE_KEY = 'solarena_player_inventory_v1';
+type ActiveTab = 
+  | 'PLAY' 
+  | 'SWAP' 
+  | 'STAKE' 
+  | 'WAGER' 
+  | 'SHOP' 
+  | 'LEADERBOARD' 
+  | 'AI_ARCHITECT' 
+  | 'ORACLE_TOAD';
 
 export default function Home() {
-  const [wallet, setWallet] = useState<BurnerWallet | null>(null);
-  const [balance, setBalance] = useState<number>(0);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'arena' | 'amm' | 'vault'>('arena');
-  const [inspectorOpen, setInspectorOpen] = useState(false);
-  const [txCount, setTxCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('PLAY');
+  const [inGameCoins, setInGameCoins] = useState<number>(45);
+  const [solBalance, setSolBalance] = useState<number>(0.5);
+  const [activeSkin, setActiveSkin] = useState<'classic' | 'fire' | 'gold' | 'shadow'>('classic');
+  const [stakingPerks, setStakingPerks] = useState<StakingPerks>({
+    coinBonusPercent: 15,
+    superJump: true,
+    coinMagnet: false,
+  });
+  const [customLevelPrompt, setCustomLevelPrompt] = useState<string>('');
+  const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
+  const [transactions, setTransactions] = useState<SolanaTransactionRecord[]>([]);
 
-  // Load inventory from storage
+  // Load transactions and listen for updates
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(INVENTORY_STORAGE_KEY);
-      if (saved) {
-        setInventory(JSON.parse(saved));
+    setTransactions(getStoredTransactions());
+
+    const handleNewTx = (e: Event) => {
+      const customEvent = e as CustomEvent<SolanaTransactionRecord>;
+      if (customEvent.detail) {
+        setTransactions(prev => [customEvent.detail, ...prev]);
       }
-    } catch (e) {
-      console.warn('Failed to parse inventory:', e);
-    }
-  }, []);
-
-  // Save inventory changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-    } catch (e) {
-      console.warn('Failed to save inventory:', e);
-    }
-  }, [inventory]);
-
-  // Track transaction count
-  useEffect(() => {
-    const updateTxCount = () => {
-      setTxCount(getStoredTransactions().length);
     };
-    updateTxCount();
-    window.addEventListener('solarena_tx_added', updateTxCount);
-    return () => window.removeEventListener('solarena_tx_added', updateTxCount);
+
+    window.addEventListener('solario_tx_added', handleNewTx);
+    return () => window.removeEventListener('solario_tx_added', handleNewTx);
   }, []);
+
+  const handleCoinCollected = (amount: number) => {
+    setInGameCoins(c => c + amount);
+  };
+
+  const handleGenerateAndPlayLevel = (prompt: string) => {
+    setCustomLevelPrompt(prompt);
+    setActiveTab('PLAY');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-slate-950 font-sans">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-black text-white flex flex-col font-mono selection:bg-emerald-500 selection:text-black">
+      {/* Global Header */}
       <Header
-        onToggleInspector={() => setInspectorOpen(!inspectorOpen)}
-        inspectorOpen={inspectorOpen}
-        txCount={txCount}
-        balance={balance}
-        setBalance={setBalance}
-        wallet={wallet}
-        setWallet={setWallet}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        onOpenInspector={() => setIsInspectorOpen(true)}
+        txCount={transactions.length}
+        inGameCoins={inGameCoins}
+        onBalanceUpdate={setSolBalance}
       />
 
-      {/* Main Tab View */}
-      <main className="flex-1 flex flex-col justify-start">
-        {activeTab === 'arena' && (
-          <CombatArena
-            wallet={wallet}
-            balance={balance}
-            setBalance={setBalance}
-            inventory={inventory}
+      {/* Navigation Tabs Bar */}
+      <div className="border-b border-zinc-800 bg-zinc-950 px-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto py-2.5 text-xs no-scrollbar">
+          <button
+            onClick={() => setActiveTab('PLAY')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'PLAY'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4" />
+            <span>Play Mario (60fps)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('SWAP')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'SWAP'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <ArrowDownUp className="w-4 h-4" />
+            <span>Mushroom Swap (AMM DEX)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('STAKE')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'STAKE'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Sprout className="w-4 h-4" />
+            <span>Yoshi&apos;s Staking (18.5% APY)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('WAGER')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'WAGER'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Flame className="w-4 h-4" />
+            <span>Speedrun Wager Escrow</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('SHOP')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'SHOP'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Power-Up & Skin Shop</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('LEADERBOARD')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'LEADERBOARD'
+                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>On-Chain Leaderboard</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('AI_ARCHITECT')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'AI_ARCHITECT'
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
+                : 'text-purple-400 hover:text-purple-300 hover:bg-zinc-900'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>AI Level Architect</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ORACLE_TOAD')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
+              activeTab === 'ORACLE_TOAD'
+                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
+                : 'text-amber-400 hover:text-amber-300 hover:bg-zinc-900'
+            }`}
+          >
+            <Bot className="w-4 h-4" />
+            <span>Oracle Toad AI</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Tab Views */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+        {activeTab === 'PLAY' && (
+          <MarioGame
+            onCoinCollected={handleCoinCollected}
+            stakingPerks={stakingPerks}
+            activeSkin={activeSkin}
+            customLevelPrompt={customLevelPrompt}
+            onTxConfirmed={() => setTransactions(getStoredTransactions())}
           />
         )}
-        {activeTab === 'amm' && (
-          <BondingCurveShop
-            wallet={wallet}
-            balance={balance}
-            setBalance={setBalance}
-            inventory={inventory}
-            setInventory={setInventory}
+
+        {activeTab === 'SWAP' && (
+          <MushroomSwap
+            inGameCoins={inGameCoins}
+            solBalance={solBalance}
+            onSwapSuccess={(newCoins, newSol) => {
+              setInGameCoins(newCoins);
+              setSolBalance(newSol);
+            }}
+            onTxConfirmed={() => setTransactions(getStoredTransactions())}
           />
         )}
-        {activeTab === 'vault' && (
+
+        {activeTab === 'STAKE' && (
           <StakingVault
-            wallet={wallet}
-            balance={balance}
-            setBalance={setBalance}
+            solBalance={solBalance}
+            onPerksChanged={setStakingPerks}
+            onBalanceChanged={setSolBalance}
+            onTxConfirmed={() => setTransactions(getStoredTransactions())}
+          />
+        )}
+
+        {activeTab === 'WAGER' && (
+          <WagerEscrow
+            solBalance={solBalance}
+            onWagerLocked={wager => setSolBalance(s => s - wager)}
+            onTxConfirmed={() => setTransactions(getStoredTransactions())}
+          />
+        )}
+
+        {activeTab === 'SHOP' && (
+          <ItemShop
+            inGameCoins={inGameCoins}
+            solBalance={solBalance}
+            activeSkin={activeSkin}
+            onSkinSelected={setActiveSkin}
+            onCoinsDeducted={amt => setInGameCoins(c => c - amt)}
+            onTxConfirmed={() => setTransactions(getStoredTransactions())}
+          />
+        )}
+
+        {activeTab === 'LEADERBOARD' && <Leaderboard />}
+
+        {activeTab === 'AI_ARCHITECT' && (
+          <AiLevelGenerator onGenerateAndPlay={handleGenerateAndPlayLevel} />
+        )}
+
+        {activeTab === 'ORACLE_TOAD' && (
+          <OracleToad
+            onAirdropRequested={() => setSolBalance(s => s + 0.5)}
+            onSwapSuggested={() => setActiveTab('SWAP')}
+            onStakeSuggested={() => setActiveTab('STAKE')}
           />
         )}
       </main>
 
-      {/* Floating Under the Hood Inspector Drawer */}
+      {/* Slide-over Solana Inspector (ELI5 Mode) */}
       <SolanaInspector
-        isOpen={inspectorOpen}
-        onClose={() => setInspectorOpen(false)}
+        isOpen={isInspectorOpen}
+        onClose={() => setIsInspectorOpen(false)}
+        transactions={transactions}
       />
 
-      {/* Hackathon Track Compliance Footer */}
-      <footer className="w-full border-t border-slate-900 bg-black/90 py-6 px-4 mt-8 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <Award className="w-4 h-4 text-cyan-400" />
-            <span className="font-bold text-slate-300">
-              MLH Solana Hackathon Submission
-            </span>
-            <span className="text-slate-600">•</span>
-            <span className="text-[11px] text-cyan-400 font-mono">
-              Qualified for: Gaming • AI • DeFi • Beginner • Top 3 Overall
-            </span>
+      {/* Footer */}
+      <footer className="border-t border-zinc-900 bg-zinc-950 py-4 px-4 text-center text-xs text-zinc-500 font-mono">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div>
+            Built with ❤️ on <span className="text-emerald-400 font-bold">Solana Devnet</span> for the MLH Solana Hackathon
           </div>
-
-          <div className="flex items-center space-x-4 text-[11px]">
-            <a
-              href="https://solscan.io?cluster=devnet"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-cyan-400 flex items-center space-x-1"
-            >
-              <span>Devnet Solscan</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-            <span className="text-slate-700">•</span>
+          <div className="flex items-center gap-4 text-[11px]">
+            <span>Tracks: Gaming • AI • DeFi • Beginner • Top 3</span>
             <button
-              onClick={() => setInspectorOpen(true)}
-              className="text-cyan-400 hover:underline"
+              onClick={() => setIsInspectorOpen(true)}
+              className="text-emerald-400 hover:underline"
             >
-              Solana Architecture Guide
+              Open Solana Inspector
             </button>
           </div>
         </div>
