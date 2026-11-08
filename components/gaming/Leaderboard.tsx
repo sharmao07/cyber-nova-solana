@@ -56,7 +56,7 @@ export default function Leaderboard() {
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
-              {w === 'ALL' ? 'All Worlds' : `World ${w}`}
+              {w === 'ALL' ? 'All Sectors' : `Sector ${w}`}
             </button>
           ))}
         </div>
@@ -68,10 +68,10 @@ export default function Leaderboard() {
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-500 uppercase text-[10px]">
               <th className="py-2.5 px-3">Rank</th>
-              <th className="py-2.5 px-3">Player / Agent</th>
-              <th className="py-2.5 px-3">World</th>
+              <th className="py-2.5 px-3">Runner / Agent</th>
+              <th className="py-2.5 px-3">Sector</th>
               <th className="py-2.5 px-3">Clear Time</th>
-              <th className="py-2.5 px-3">$COIN</th>
+              <th className="py-2.5 px-3">$SHARD</th>
               <th className="py-2.5 px-3">Score</th>
               <th className="py-2.5 px-3 text-right">Proof</th>
             </tr>

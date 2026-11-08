@@ -1,32 +1,34 @@
-export type PowerUpState = 'small' | 'super' | 'fire' | 'star';
+// Core Types for CYBER NOVA: Sol-Runner Odyssey
+// Original Futuristic Cyber-Platformer IP for Solana
 
-export type EnemyType = 'goomba' | 'koopa' | 'piranha' | 'bowser';
-export type EnemyState = 'walk' | 'squished' | 'shell_idle' | 'shell_moving' | 'dead';
+export type PowerUpState = 'standard' | 'overcharge' | 'plasma' | 'hyper';
+
+export type EnemyType = 'fud_bot' | 'shield_orb' | 'plasma_sentry' | 'macro_titan';
+export type EnemyState = 'patrol' | 'crushed' | 'sphere_idle' | 'sphere_rolling' | 'terminated';
 
 export type TileType = 
   | 'empty'
-  | 'ground'
-  | 'brick'
-  | 'question'
-  | 'metal'
-  | 'pipe_tl'
-  | 'pipe_tr'
-  | 'pipe_bl'
-  | 'pipe_br'
-  | 'cloud'
-  | 'bush'
-  | 'hill'
-  | 'springboard'
-  | 'lava'
-  | 'axe'
-  | 'bridge'
-  | 'castle_brick'
-  | 'castle_door'
-  | 'flagpole_top'
-  | 'flagpole_pole'
-  | 'flagpole_base';
+  | 'circuit_floor'
+  | 'carbon_brick'
+  | 'matrix_cache'     // [ ? ] block
+  | 'spent_alloy'      // Empty metal block after hit
+  | 'transit_pipe_tl'
+  | 'transit_pipe_tr'
+  | 'transit_pipe_bl'
+  | 'transit_pipe_br'
+  | 'cloud_platform'
+  | 'tech_panel'
+  | 'launch_pad'       // Springboard trampoline
+  | 'plasma_abyss'     // Lava pit
+  | 'core_fuse'        // The Golden Solana Overload Switch to drop the boss
+  | 'flux_bridge'      // Bridge under Macro-Titan
+  | 'citadel_plating'
+  | 'portal_door'
+  | 'uplink_pylon_top'
+  | 'uplink_pylon_beam'
+  | 'uplink_pylon_base';
 
-export type HiddenItem = 'coin' | 'mushroom' | 'flower' | 'star' | '1up' | 'none';
+export type CacheHiddenItem = 'shard' | 'overcharge' | 'plasma_core' | 'hyper_matrix' | 'reboot_life' | 'none';
 
 export interface Player {
   x: number;
@@ -38,12 +40,12 @@ export interface Player {
   powerUp: PowerUpState;
   grounded: boolean;
   facingLeft: boolean;
-  invincibleTimer: number; // in frames or ms
-  starTimer: number; // duration of starman
+  invincibleTimer: number;
+  hyperTimer: number; // duration of hyper invincibility
   isDying: boolean;
   deathTimer: number;
-  flagpoleSliding: boolean;
-  flagpoleY: number;
+  uplinkSliding: boolean;
+  uplinkY: number;
   walkFrame: number;
   walkCounter: number;
 }
@@ -60,14 +62,14 @@ export interface Enemy {
   state: EnemyState;
   stateTimer: number;
   facingLeft: boolean;
-  health?: number; // for Bowser (e.g. 5 hits)
-  fireTimer?: number;
+  health?: number; // for Macro-Titan boss
+  attackTimer?: number;
 }
 
 export interface TileBlock {
   type: TileType;
-  hiddenItem: HiddenItem;
-  coinsLeft: number;
+  hiddenItem: CacheHiddenItem;
+  shardsLeft: number;
   bumpOffsetY: number;
   bumpVy: number;
 }
@@ -86,7 +88,7 @@ export interface Particle {
 
 export interface PowerUpItemEntity {
   id: string;
-  type: 'mushroom' | 'flower' | 'star' | '1up';
+  type: 'overcharge' | 'plasma_core' | 'hyper_matrix' | 'reboot_life';
   x: number;
   y: number;
   vx: number;
@@ -95,10 +97,19 @@ export interface PowerUpItemEntity {
   h: number;
   grounded: boolean;
   sprouting: boolean;
-  sproutY: number;
+  sproutProgress: number; // 0 to 1
+  originY: number;
 }
 
-export interface FireballEntity {
+export interface PoppingShardEntity {
+  id: string;
+  x: number;
+  y: number;
+  vy: number;
+  life: number;
+}
+
+export interface PlasmaBoltEntity {
   id: string;
   x: number;
   y: number;
@@ -110,7 +121,7 @@ export interface FireballEntity {
   active: boolean;
 }
 
-export interface BowserFireball {
+export interface TitanPlasmaWave {
   id: string;
   x: number;
   y: number;
@@ -130,9 +141,9 @@ export interface ScorePopup {
 
 export interface LevelConfig {
   id: string;
-  worldNumber: string; // "1-1", "1-2", "1-3", "1-4", "AI-GEN"
+  worldNumber: string; // "1-1", "1-2", "1-3", "1-4", "AI-MATRIX"
   name: string;
-  theme: 'overworld' | 'underground' | 'sky' | 'castle';
+  theme: 'cyber_city' | 'mempool_cavern' | 'sky_uplink' | 'titan_citadel';
   widthTiles: number;
   heightTiles: number;
   playerStartX: number;
@@ -141,10 +152,10 @@ export interface LevelConfig {
   bgColor: string;
   mapGrid: TileBlock[][]; // [y][x]
   enemies: Enemy[];
-  hasAxe?: boolean;
-  hasFlagpole?: boolean;
-  flagpoleTileX?: number;
-  axeTileX?: number;
+  hasCoreFuse?: boolean;
+  hasUplinkPylon?: boolean;
+  uplinkTileX?: number;
+  fuseTileX?: number;
   bridgeStartX?: number;
   bridgeEndX?: number;
   musicTheme: 'overworld' | 'underground' | 'sky' | 'castle';
@@ -155,7 +166,7 @@ export interface SpeedrunLeaderboardEntry {
   playerAddress: string;
   world: string;
   timeSeconds: number;
-  coins: number;
+  shards: number;
   score: number;
   enemiesDefeated: number;
   isAiAgent: boolean;
@@ -166,7 +177,7 @@ export interface SpeedrunLeaderboardEntry {
 }
 
 export interface StakingPerks {
-  coinBonusPercent: number; // e.g. 15%
-  superJump: boolean;       // +20% jump height
-  coinMagnet: boolean;      // pulls coins in 4-tile radius
+  shardBonusPercent: number; // e.g. 15%
+  superJump: boolean;        // +20% jump height
+  shardMagnet: boolean;      // pulls shards in 4-tile radius
 }

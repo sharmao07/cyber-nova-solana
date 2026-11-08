@@ -17,14 +17,12 @@ import { SolanaTransactionRecord } from '@/lib/solana/types';
 import { 
   Gamepad2, 
   ArrowDownUp, 
-  Sprout, 
   Flame, 
   ShoppingBag, 
   Trophy, 
   Sparkles, 
   Bot,
-  Zap,
-  Info
+  Zap
 } from 'lucide-react';
 
 type ActiveTab = 
@@ -43,15 +41,14 @@ export default function Home() {
   const [solBalance, setSolBalance] = useState<number>(0.5);
   const [activeSkin, setActiveSkin] = useState<'classic' | 'fire' | 'gold' | 'shadow'>('classic');
   const [stakingPerks, setStakingPerks] = useState<StakingPerks>({
-    coinBonusPercent: 15,
+    shardBonusPercent: 15,
     superJump: true,
-    coinMagnet: false,
+    shardMagnet: false,
   });
   const [customLevelPrompt, setCustomLevelPrompt] = useState<string>('');
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<SolanaTransactionRecord[]>([]);
 
-  // Load transactions and listen for updates
   useEffect(() => {
     setTransactions(getStoredTransactions());
 
@@ -76,7 +73,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-mono selection:bg-emerald-500 selection:text-black">
+    <div className="min-h-screen bg-black text-white flex flex-col font-mono selection:bg-cyan-500 selection:text-black">
       {/* Global Header */}
       <Header
         onOpenInspector={() => setIsInspectorOpen(true)}
@@ -92,12 +89,12 @@ export default function Home() {
             onClick={() => setActiveTab('PLAY')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
               activeTab === 'PLAY'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
             <Gamepad2 className="w-4 h-4" />
-            <span>Play Mario (60fps)</span>
+            <span>Play Nova (60fps)</span>
           </button>
 
           <button
@@ -109,7 +106,7 @@ export default function Home() {
             }`}
           >
             <ArrowDownUp className="w-4 h-4" />
-            <span>Mushroom Swap (AMM DEX)</span>
+            <span>Quantum Swap (AMM DEX)</span>
           </button>
 
           <button
@@ -120,15 +117,15 @@ export default function Home() {
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
-            <Sprout className="w-4 h-4" />
-            <span>Yoshi&apos;s Staking (18.5% APY)</span>
+            <Zap className="w-4 h-4" />
+            <span>Solar Staking (18.5% APY)</span>
           </button>
 
           <button
             onClick={() => setActiveTab('WAGER')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
               activeTab === 'WAGER'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
@@ -140,19 +137,19 @@ export default function Home() {
             onClick={() => setActiveTab('SHOP')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
               activeTab === 'SHOP'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>Power-Up & Skin Shop</span>
+            <span>Chassis & Powerup Terminal</span>
           </button>
 
           <button
             onClick={() => setActiveTab('LEADERBOARD')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
               activeTab === 'LEADERBOARD'
-                ? 'bg-emerald-500 text-zinc-950 shadow-md shadow-emerald-500/20'
+                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
                 : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
@@ -169,19 +166,19 @@ export default function Home() {
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>AI Level Architect</span>
+            <span>AI Matrix Architect</span>
           </button>
 
           <button
             onClick={() => setActiveTab('ORACLE_TOAD')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition whitespace-nowrap ${
               activeTab === 'ORACLE_TOAD'
-                ? 'bg-amber-500 text-zinc-950 shadow-md shadow-amber-500/20'
-                : 'text-amber-400 hover:text-amber-300 hover:bg-zinc-900'
+                ? 'bg-cyan-500 text-zinc-950 shadow-md shadow-cyan-500/20'
+                : 'text-cyan-400 hover:text-cyan-300 hover:bg-zinc-900'
             }`}
           >
             <Bot className="w-4 h-4" />
-            <span>Oracle Toad AI</span>
+            <span>A.R.I.A. Copilot</span>
           </button>
         </div>
       </div>
@@ -253,7 +250,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Slide-over Solana Inspector (ELI5 Mode) */}
       <SolanaInspector
         isOpen={isInspectorOpen}
         onClose={() => setIsInspectorOpen(false)}
@@ -264,13 +260,13 @@ export default function Home() {
       <footer className="border-t border-zinc-900 bg-zinc-950 py-4 px-4 text-center text-xs text-zinc-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div>
-            Built with ❤️ on <span className="text-emerald-400 font-bold">Solana Devnet</span> for the MLH Solana Hackathon
+            CYBER NOVA • Powered by <span className="text-cyan-400 font-bold">Solana Devnet</span> for the MLH Solana Hackathon
           </div>
           <div className="flex items-center gap-4 text-[11px]">
-            <span>Tracks: Gaming • AI • DeFi • Beginner • Top 3</span>
+            <span>Gaming • AI • DeFi • Beginner • Top 3</span>
             <button
               onClick={() => setIsInspectorOpen(true)}
-              className="text-emerald-400 hover:underline"
+              className="text-cyan-400 hover:underline"
             >
               Open Solana Inspector
             </button>

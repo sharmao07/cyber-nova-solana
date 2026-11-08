@@ -6,8 +6,9 @@ import {
   Player, 
   LevelConfig, 
   PowerUpItemEntity, 
-  FireballEntity, 
-  BowserFireball,
+  PoppingShardEntity,
+  PlasmaBoltEntity, 
+  TitanPlasmaWave,
   ScorePopup, 
   Particle,
   StakingPerks
@@ -24,7 +25,8 @@ import {
   drawEnemy, 
   drawTile, 
   drawPowerUp, 
-  drawCoin, 
+  drawShard,
+  drawPoppingShard,
   TILE_SIZE 
 } from '@/lib/mario/sprites';
 import { updateGamePhysics } from '@/lib/mario/physics';
@@ -41,14 +43,10 @@ import {
   RotateCcw, 
   ExternalLink, 
   Trophy, 
-  Play, 
-  Pause, 
   Tv, 
   Zap, 
   Flame, 
   Gamepad2, 
-  ArrowRight,
-  ShieldAlert,
   Coins
 } from 'lucide-react';
 
@@ -73,7 +71,7 @@ export default function MarioGame({
   const [currentWorldId, setCurrentWorldId] = useState<string>('1-1');
   const [level, setLevel] = useState<LevelConfig>(createWorld1_1);
   const [score, setScore] = useState<number>(0);
-  const [coins, setCoins] = useState<number>(0);
+  const [shards, setShards] = useState<number>(0);
   const [lives, setLives] = useState<number>(3);
   const [timeLeft, setTimeLeft] = useState<number>(300);
   const [isAiAutopilot, setIsAiAutopilot] = useState<boolean>(false);
@@ -86,15 +84,16 @@ export default function MarioGame({
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
   const [isAttesting, setIsAttesting] = useState<boolean>(false);
   const [attestationSig, setAttestationSig] = useState<string | null>(null);
-  const [runStats, setRunStats] = useState<{ time: number; coins: number; score: number } | null>(null);
+  const [runStats, setRunStats] = useState<{ time: number; shards: number; score: number } | null>(null);
 
   // Mutable Game References for 60fps Loop
   const gameStateRef = useRef<{
     player: Player;
     level: LevelConfig;
     powerUps: PowerUpItemEntity[];
-    fireballs: FireballEntity[];
-    bowserFireballs: BowserFireball[];
+    poppingShards: PoppingShardEntity[];
+    plasmaBolts: PlasmaBoltEntity[];
+    titanWaves: TitanPlasmaWave[];
     scorePopups: ScorePopup[];
     particles: Particle[];
     viewportX: number;
@@ -110,22 +109,23 @@ export default function MarioGame({
       vy: 0,
       w: 24,
       h: 24,
-      powerUp: 'small',
+      powerUp: 'standard',
       grounded: true,
       facingLeft: false,
       invincibleTimer: 0,
-      starTimer: 0,
+      hyperTimer: 0,
       isDying: false,
       deathTimer: 0,
-      flagpoleSliding: false,
-      flagpoleY: 0,
+      uplinkSliding: false,
+      uplinkY: 0,
       walkFrame: 0,
       walkCounter: 0,
     },
     level: createWorld1_1(),
     powerUps: [],
-    fireballs: [],
-    bowserFireballs: [],
+    poppingShards: [],
+    plasmaBolts: [],
+    titanWaves: [],
     scorePopups: [],
     particles: [],
     viewportX: 0,
@@ -135,14 +135,13 @@ export default function MarioGame({
     keys: { left: false, right: false, jump: false, sprint: false, fire: false },
   });
 
-  // Switch or reload level
   const loadLevel = useCallback((world: string, customPrompt?: string) => {
     let newLvl: LevelConfig;
     if (world === '1-1') newLvl = createWorld1_1();
     else if (world === '1-2') newLvl = createWorld1_2();
     else if (world === '1-3') newLvl = createWorld1_3();
     else if (world === '1-4') newLvl = createWorld1_4();
-    else newLvl = createAiGeneratedLevel(customPrompt || 'hardcore sky trampolines with lots of coins');
+    else newLvl = createAiGeneratedLevel(customPrompt || 'high tech sky trampolines with lots of shards');
 
     setLevel(newLvl);
     setCurrentWorldId(world);
@@ -151,7 +150,6 @@ export default function MarioGame({
     setShowGameOverModal(false);
     setAttestationSig(null);
 
-    // Reset player position and physics
     const gs = gameStateRef.current;
     gs.level = newLvl;
     gs.player.x = newLvl.playerStartX;
@@ -159,12 +157,13 @@ export default function MarioGame({
     gs.player.vx = 0;
     gs.player.vy = 0;
     gs.player.isDying = false;
-    gs.player.flagpoleSliding = false;
-    gs.player.powerUp = activeSkin === 'fire' ? 'fire' : 'small';
-    gs.player.h = gs.player.powerUp === 'small' ? 24 : 32;
+    gs.player.uplinkSliding = false;
+    gs.player.powerUp = activeSkin === 'fire' ? 'plasma' : 'standard';
+    gs.player.h = gs.player.powerUp === 'standard' ? 24 : 32;
     gs.powerUps = [];
-    gs.fireballs = [];
-    gs.bowserFireballs = [];
+    gs.poppingShards = [];
+    gs.plasmaBolts = [];
+    gs.titanWaves = [];
     gs.scorePopups = [];
     gs.particles = [];
     gs.viewportX = 0;
@@ -189,11 +188,10 @@ export default function MarioGame({
       if (e.key === 'Shift') gs.keys.sprint = true;
       if (e.key === 'x' || e.key === 'X' || e.key === 'f' || e.key === 'F') {
         gs.keys.fire = true;
-        // Shoot fireball if Fire Mario
-        if (gs.player.powerUp === 'fire' && gs.fireballs.length < 3) {
+        if (gs.player.powerUp === 'plasma' && gs.plasmaBolts.length < 3) {
           sounds.playFireball();
-          gs.fireballs.push({
-            id: `fb_${Date.now()}`,
+          gs.plasmaBolts.push({
+            id: `pb_${Date.now()}`,
             x: gs.player.facingLeft ? gs.player.x - 8 : gs.player.x + gs.player.w + 2,
             y: gs.player.y + 8,
             vx: gs.player.facingLeft ? -7 : 7,
@@ -245,16 +243,15 @@ export default function MarioGame({
 
       gs.globalFrame++;
 
-      // Compute AI input if Autopilot enabled
       if (isAiAutopilot) {
         const aiOutput = computeAiAgentAction(gs.player, gs.level, gs.globalFrame);
         gs.keys = aiOutput.keys;
         setAiTelemetry(aiOutput.telemetry);
 
-        if (gs.keys.fire && gs.player.powerUp === 'fire' && gs.fireballs.length < 3) {
+        if (gs.keys.fire && gs.player.powerUp === 'plasma' && gs.plasmaBolts.length < 3) {
           sounds.playFireball();
-          gs.fireballs.push({
-            id: `fb_ai_${Date.now()}`,
+          gs.plasmaBolts.push({
+            id: `pb_ai_${Date.now()}`,
             x: gs.player.facingLeft ? gs.player.x - 8 : gs.player.x + gs.player.w + 2,
             y: gs.player.y + 8,
             vx: gs.player.facingLeft ? -7 : 7,
@@ -267,40 +264,38 @@ export default function MarioGame({
         }
       }
 
-      // Physics tick
       const out = updateGamePhysics(
         gs.player,
         gs.level,
         gs.keys,
         gs.powerUps,
-        gs.fireballs,
-        gs.bowserFireballs,
+        gs.poppingShards,
+        gs.plasmaBolts,
+        gs.titanWaves,
         gs.scorePopups,
         gs.particles,
         stakingPerks,
         gs.globalFrame
       );
 
-      // Handle Coins & Score
-      if (out.coinsGained > 0) {
-        let coinBonus = out.coinsGained;
-        if (stakingPerks.coinBonusPercent > 0) {
-          coinBonus = Math.round(coinBonus * (1 + stakingPerks.coinBonusPercent / 100));
+      if (out.shardsGained > 0) {
+        let bonus = out.shardsGained;
+        if (stakingPerks.shardBonusPercent > 0) {
+          bonus = Math.round(bonus * (1 + stakingPerks.shardBonusPercent / 100));
         }
-        setCoins(c => c + coinBonus);
-        onCoinCollected(coinBonus);
+        setShards(c => c + bonus);
+        onCoinCollected(bonus);
       }
 
       if (out.scoreGained > 0) {
         setScore(s => s + out.scoreGained);
       }
 
-      // Level Cleared!
       if (out.levelCleared) {
         const elapsedSec = Math.max(1, (Date.now() - gs.startTime) / 1000);
         setRunStats({
           time: elapsedSec,
-          coins: coins + out.coinsGained,
+          shards: shards + out.shardsGained,
           score: score + out.scoreGained,
         });
         setShowClearModal(true);
@@ -308,19 +303,17 @@ export default function MarioGame({
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#14F195', '#9945FF', '#FFD700', '#E52521'],
+          colors: ['#14F195', '#00FFFF', '#9945FF', '#F59E0B'],
         });
         return;
       }
 
-      // Player Died
       if (out.playerDied) {
         setLives(l => {
           const next = l - 1;
           if (next <= 0) {
             setShowGameOverModal(true);
           } else {
-            // Respawn in same level
             loadLevel(currentWorldId);
           }
           return next;
@@ -328,7 +321,7 @@ export default function MarioGame({
         return;
       }
 
-      // Smooth horizontal camera tracking
+      // Smooth horizontal camera
       const targetViewportX = gs.player.x - canvas.width * 0.38;
       gs.viewportX += (targetViewportX - gs.viewportX) * 0.12;
       if (gs.viewportX < 0) gs.viewportX = 0;
@@ -341,9 +334,8 @@ export default function MarioGame({
 
     animId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animId);
-  }, [isPaused, showClearModal, showGameOverModal, isAiAutopilot, stakingPerks, activeSkin, coins, score, currentWorldId, loadLevel, onCoinCollected]);
+  }, [isPaused, showClearModal, showGameOverModal, isAiAutopilot, stakingPerks, activeSkin, shards, score, currentWorldId, loadLevel, onCoinCollected]);
 
-  // Renderer function
   const renderGameFrame = (
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement,
@@ -354,20 +346,17 @@ export default function MarioGame({
     ctx.fillStyle = gs.level.bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Decorative background clouds / mountains if overworld or sky
-    if (gs.level.theme === 'overworld' || gs.level.theme === 'sky') {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      for (let i = 0; i < 8; i++) {
-        const cloudX = (i * 240 - gs.viewportX * 0.3) % (canvas.width + 200) - 100;
-        ctx.beginPath();
-        ctx.arc(cloudX, 70, 24, 0, Math.PI * 2);
-        ctx.arc(cloudX + 25, 60, 30, 0, Math.PI * 2);
-        ctx.arc(cloudX + 55, 70, 22, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    // Decorative futuristic background grid lines
+    ctx.strokeStyle = 'rgba(20, 241, 149, 0.05)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
     }
 
-    // 2. Render Tiles
+    // 2. Render Tiles (with smooth bump offsets)
     const startTileX = Math.max(0, Math.floor(gs.viewportX / TILE_SIZE));
     const endTileX = Math.min(gs.level.widthTiles, Math.ceil((gs.viewportX + canvas.width) / TILE_SIZE));
 
@@ -388,7 +377,12 @@ export default function MarioGame({
       }
     }
 
-    // 3. Render PowerUps
+    // 3. Render Popping Shards
+    for (const pop of gs.poppingShards) {
+      drawPoppingShard(ctx, pop, gs.viewportX);
+    }
+
+    // 4. Render PowerUps
     for (const p of gs.powerUps) {
       drawPowerUp(
         ctx,
@@ -399,28 +393,27 @@ export default function MarioGame({
       );
     }
 
-    // 4. Render Enemies
+    // 5. Render Enemies
     for (const enemy of gs.level.enemies) {
-      if (enemy.state === 'dead') continue;
-      // Only render if within viewport bounds
+      if (enemy.state === 'terminated') continue;
       if (enemy.x >= gs.viewportX - 60 && enemy.x <= gs.viewportX + canvas.width + 60) {
         drawEnemy(ctx, enemy, gs.viewportX, gs.globalFrame);
       }
     }
 
-    // 5. Render Fireballs
-    for (const fb of gs.fireballs) {
-      ctx.fillStyle = '#FF4500';
+    // 6. Render Plasma Bolts
+    for (const pb of gs.plasmaBolts) {
+      ctx.fillStyle = '#00FFFF';
       ctx.beginPath();
-      ctx.arc(fb.x - gs.viewportX + 6, fb.y + 6, 6, 0, Math.PI * 2);
+      ctx.arc(pb.x - gs.viewportX + 6, pb.y + 6, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#FFFF00';
+      ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(fb.x - gs.viewportX + 6, fb.y + 6, 3, 0, Math.PI * 2);
+      ctx.arc(pb.x - gs.viewportX + 6, pb.y + 6, 3, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // 6. Render Particles
+    // 7. Render Particles
     for (let i = gs.particles.length - 1; i >= 0; i--) {
       const part = gs.particles[i];
       part.vy += part.gravity || 0.3;
@@ -436,29 +429,28 @@ export default function MarioGame({
       }
     }
 
-    // 7. Render Player (Solario)
+    // 8. Render Protagonist (Nova)
     drawPlayer(ctx, gs.player, gs.viewportX, gs.globalFrame, skin);
 
-    // 8. Render AI Autopilot Visual Path Indicator
+    // 9. AI Visual Path Telemetry
     if (isAiAutopilot) {
       ctx.save();
-      ctx.strokeStyle = '#14F195';
+      ctx.strokeStyle = '#00FFFF';
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
       ctx.moveTo(gs.player.x - gs.viewportX + gs.player.w / 2, gs.player.y + gs.player.h / 2);
       ctx.lineTo(
-        gs.player.x - gs.viewportX + gs.player.w / 2 + 120,
-        gs.player.y + gs.player.h / 2 - 10
+        gs.player.x - gs.viewportX + gs.player.w / 2 + 130,
+        gs.player.y + gs.player.h / 2 - 12
       );
       ctx.stroke();
 
-      // AI Target reticle
-      ctx.fillStyle = '#14F195';
+      ctx.fillStyle = '#00FFFF';
       ctx.beginPath();
       ctx.arc(
-        gs.player.x - gs.viewportX + gs.player.w / 2 + 120,
-        gs.player.y + gs.player.h / 2 - 10,
+        gs.player.x - gs.viewportX + gs.player.w / 2 + 130,
+        gs.player.y + gs.player.h / 2 - 12,
         4,
         0,
         Math.PI * 2
@@ -468,7 +460,6 @@ export default function MarioGame({
     }
   };
 
-  // Attest Run to Solana Devnet
   const handleAttestRun = async () => {
     if (!runStats || isAttesting) return;
     setIsAttesting(true);
@@ -486,7 +477,7 @@ export default function MarioGame({
         keypair,
         currentWorldId,
         runStats.time,
-        runStats.coins,
+        runStats.shards,
         runStats.score,
         isAiAutopilot
       );
@@ -501,17 +492,16 @@ export default function MarioGame({
     }
   };
 
-  // On-screen touch buttons helper
   const handleTouchControl = (key: 'left' | 'right' | 'jump' | 'fire' | 'sprint', pressed: boolean) => {
     const gs = gameStateRef.current;
     gs.keys[key] = pressed;
     if (key === 'jump' && pressed && gs.player.grounded) {
-      sounds.playJump(gs.player.powerUp !== 'small');
+      sounds.playJump(gs.player.powerUp !== 'standard');
     }
-    if (key === 'fire' && pressed && gs.player.powerUp === 'fire' && gs.fireballs.length < 3) {
+    if (key === 'fire' && pressed && gs.player.powerUp === 'plasma' && gs.plasmaBolts.length < 3) {
       sounds.playFireball();
-      gs.fireballs.push({
-        id: `fb_touch_${Date.now()}`,
+      gs.plasmaBolts.push({
+        id: `pb_touch_${Date.now()}`,
         x: gs.player.facingLeft ? gs.player.x - 8 : gs.player.x + gs.player.w + 2,
         y: gs.player.y + 8,
         vx: gs.player.facingLeft ? -7 : 7,
@@ -526,44 +516,44 @@ export default function MarioGame({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Retro Arcade Cabinet Frame */}
+      {/* Retro Cyber Arcade Frame */}
       <div className="w-full max-w-4xl bg-gradient-to-b from-zinc-900 to-zinc-950 border-4 border-zinc-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
-        {/* Top Header Display / Arcade Marquee */}
+        {/* Top Header Marquee */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3 bg-zinc-950/80 border border-zinc-800/80 px-4 py-2.5 rounded-xl font-mono text-xs text-white">
           <div className="flex items-center gap-6">
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Player</div>
-              <div className="font-black text-amber-400 tracking-wider">SOLARIO</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Runner</div>
+              <div className="font-black text-cyan-400 tracking-wider">NOVA</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Score</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Energy Score</div>
               <div className="font-bold text-white tracking-widest">{score.toString().padStart(6, '0')}</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">$COIN</div>
-              <div className="font-bold text-amber-400 flex items-center gap-1">
-                <Coins className="w-3.5 h-3.5 text-amber-400" />
-                <span>x{coins.toString().padStart(2, '0')}</span>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Energy Shards</div>
+              <div className="font-bold text-emerald-400 flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                <span>x{shards.toString().padStart(2, '0')}</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">World</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Subnet Sector</div>
               <div className="font-black text-emerald-400 tracking-wider">{currentWorldId}</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Lives</div>
-              <div className="font-bold text-red-400">{'❤️'.repeat(lives)}</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Shields</div>
+              <div className="font-bold text-cyan-400">{'⚡'.repeat(lives)}</div>
             </div>
             <div>
-              <div className="text-[10px] text-zinc-500 font-bold uppercase">Buffs</div>
+              <div className="text-[10px] text-zinc-500 font-bold uppercase">Active Buffs</div>
               <div className="flex items-center gap-1 text-[11px] text-emerald-300">
-                {stakingPerks.coinMagnet && <span title="Coin Magnet">🧲</span>}
-                {stakingPerks.superJump && <span title="Super Jump">🚀</span>}
-                {stakingPerks.coinBonusPercent > 0 && <span title="Coin Yield">+{stakingPerks.coinBonusPercent}%</span>}
-                {!stakingPerks.coinMagnet && !stakingPerks.superJump && <span className="text-zinc-600">None</span>}
+                {stakingPerks.shardMagnet && <span title="Shard Magnet">🧲</span>}
+                {stakingPerks.superJump && <span title="Super Mag-Jump">🚀</span>}
+                {stakingPerks.shardBonusPercent > 0 && <span title="Shard Yield">+{stakingPerks.shardBonusPercent}%</span>}
+                {!stakingPerks.shardMagnet && !stakingPerks.superJump && <span className="text-zinc-600">None</span>}
               </div>
             </div>
           </div>
@@ -578,26 +568,25 @@ export default function MarioGame({
             className="w-full h-full block"
           />
 
-          {/* CRT Scanline Shader Overlay */}
           {hasCrtEffect && (
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.35)_100%)] opacity-80">
               <div className="w-full h-full bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px]" />
             </div>
           )}
 
-          {/* AI Autopilot Live Telemetry HUD Overlay */}
+          {/* AI Autopilot Live Telemetry HUD */}
           {isAiAutopilot && aiTelemetry && (
-            <div className="absolute top-3 left-3 bg-zinc-950/90 border border-emerald-500/50 backdrop-blur-md px-3 py-2 rounded-lg font-mono text-[11px] shadow-lg max-w-sm pointer-events-none z-10">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold mb-1">
+            <div className="absolute top-3 left-3 bg-zinc-950/90 border border-cyan-500/50 backdrop-blur-md px-3 py-2 rounded-lg font-mono text-[11px] shadow-lg max-w-sm pointer-events-none z-10">
+              <div className="flex items-center gap-2 text-cyan-400 font-bold mb-1">
                 <Bot className="w-3.5 h-3.5 animate-pulse" />
-                <span>TOAD AI AUTONOMOUS COPILOT</span>
-                <span className="text-[9px] bg-emerald-500/20 px-1.5 py-0.2 rounded text-emerald-300">
+                <span>A.R.I.A. AUTONOMOUS RUNNER COPILOT</span>
+                <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.2 rounded text-cyan-300">
                   {Math.round(aiTelemetry.confidence * 100)}% Conf
                 </span>
               </div>
               <div className="text-zinc-300">
                 <span className="text-zinc-500">Action:</span>{' '}
-                <span className="font-semibold text-amber-300">{aiTelemetry.action}</span>
+                <span className="font-semibold text-emerald-300">{aiTelemetry.action}</span>
               </div>
               <div className="text-zinc-400 text-[10px] line-clamp-1">
                 {aiTelemetry.reason}
@@ -606,10 +595,10 @@ export default function MarioGame({
           )}
         </div>
 
-        {/* Level Selector Toolbar */}
+        {/* Sector Toolbar */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 bg-zinc-950/70 border border-zinc-800 p-2 rounded-xl">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-mono text-zinc-500 px-2">Levels:</span>
+            <span className="text-xs font-mono text-zinc-500 px-2">Sectors:</span>
             <button
               onClick={() => loadLevel('1-1')}
               className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
@@ -648,12 +637,12 @@ export default function MarioGame({
                   : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
               }`}
             >
-              1-4 Bear Castle
+              1-4 Titan Citadel
             </button>
             <button
-              onClick={() => loadLevel('AI-GEN', customLevelPrompt)}
+              onClick={() => loadLevel('AI-MATRIX', customLevelPrompt)}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
-                currentWorldId === 'AI-GEN' 
+                currentWorldId === 'AI-MATRIX' 
                   ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20' 
                   : 'bg-zinc-900 text-purple-300 hover:bg-zinc-800'
               }`}
@@ -663,25 +652,22 @@ export default function MarioGame({
             </button>
           </div>
 
-          {/* Action Toggles */}
           <div className="flex items-center gap-2">
-            {/* AI Autopilot Toggle */}
             <button
               onClick={() => setIsAiAutopilot(!isAiAutopilot)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition ${
                 isAiAutopilot 
-                  ? 'bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/30' 
-                  : 'bg-zinc-900 border border-emerald-500/40 text-emerald-400 hover:bg-zinc-800'
+                  ? 'bg-cyan-500 text-zinc-950 shadow-lg shadow-cyan-500/30' 
+                  : 'bg-zinc-900 border border-cyan-500/40 text-cyan-400 hover:bg-zinc-800'
               }`}
             >
               <Bot className="w-4 h-4" />
-              <span>{isAiAutopilot ? 'AI Autopilot: ON' : 'AI Autopilot: OFF'}</span>
+              <span>{isAiAutopilot ? 'AI Copilot: ON' : 'AI Copilot: OFF'}</span>
             </button>
 
-            {/* CRT Effect Toggle */}
             <button
               onClick={() => setHasCrtEffect(!hasCrtEffect)}
-              title="Toggle retro CRT scanlines"
+              title="Toggle CRT scanlines"
               className={`p-2 rounded-lg text-xs font-mono transition ${
                 hasCrtEffect ? 'bg-zinc-800 text-emerald-400' : 'bg-zinc-900 text-zinc-500'
               }`}
@@ -689,10 +675,9 @@ export default function MarioGame({
               <Tv className="w-4 h-4" />
             </button>
 
-            {/* Restart Level */}
             <button
               onClick={() => loadLevel(currentWorldId)}
-              title="Restart Level"
+              title="Restart Sector"
               className="p-2 rounded-lg bg-zinc-900 text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
             >
               <RotateCcw className="w-4 h-4" />
@@ -700,9 +685,8 @@ export default function MarioGame({
           </div>
         </div>
 
-        {/* On-Screen Touch / Gamepad Controls (Mobile & Tablet Friendly) */}
+        {/* Mobile Touch Controls */}
         <div className="mt-4 grid grid-cols-2 gap-4 select-none sm:hidden">
-          {/* D-Pad Left/Right */}
           <div className="flex items-center gap-2">
             <button
               onTouchStart={() => handleTouchControl('left', true)}
@@ -724,17 +708,16 @@ export default function MarioGame({
             </button>
           </div>
 
-          {/* Action Buttons: A (Jump) and B (Run/Fire) */}
           <div className="flex items-center justify-end gap-3">
             <button
               onTouchStart={() => handleTouchControl('fire', true)}
               onTouchEnd={() => handleTouchControl('fire', false)}
               onMouseDown={() => handleTouchControl('fire', true)}
               onMouseUp={() => handleTouchControl('fire', false)}
-              className="w-14 h-14 bg-red-600 active:bg-red-500 rounded-full flex flex-col items-center justify-center text-xs font-black text-white shadow-md"
+              className="w-14 h-14 bg-cyan-600 active:bg-cyan-500 rounded-full flex flex-col items-center justify-center text-xs font-black text-white shadow-md"
             >
               <span>B</span>
-              <span className="text-[9px] opacity-80">FIRE</span>
+              <span className="text-[9px] opacity-80">PLASMA</span>
             </button>
             <button
               onTouchStart={() => handleTouchControl('jump', true)}
@@ -753,8 +736,8 @@ export default function MarioGame({
         <div className="hidden sm:flex items-center justify-between mt-3 text-[11px] font-mono text-zinc-500 border-t border-zinc-900 pt-2 px-1">
           <div>
             <span className="text-zinc-400 font-bold">[Arrow Keys / WASD]</span> Move & Jump •{' '}
-            <span className="text-zinc-400 font-bold">[Shift]</span> Sprint •{' '}
-            <span className="text-zinc-400 font-bold">[X]</span> Fireball
+            <span className="text-zinc-400 font-bold">[Shift]</span> Mag-Sprint •{' '}
+            <span className="text-zinc-400 font-bold">[X]</span> Plasma Cannon
           </div>
           <div className="flex items-center gap-1.5 text-emerald-400/80">
             <Gamepad2 className="w-3.5 h-3.5" />
@@ -766,34 +749,32 @@ export default function MarioGame({
       {/* Stage Clear Modal */}
       {showClearModal && runStats && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border-2 border-emerald-500 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative">
+          <div className="bg-zinc-900 border-2 border-emerald-500 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative font-mono">
             <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 rounded-full mx-auto flex items-center justify-center text-3xl mb-3">
-              🏆
+              ⚡
             </div>
-            <h2 className="text-2xl font-black font-mono text-white tracking-wide">
-              STAGE CLEAR!
+            <h2 className="text-2xl font-black text-white tracking-wide">
+              SECTOR CLEARED!
             </h2>
-            <p className="text-xs font-mono text-zinc-400 mt-1">
-              {isAiAutopilot ? 'Autonomous AI Toad completed the speedrun' : 'You completed the speedrun successfully'}!
+            <p className="text-xs text-zinc-400 mt-1">
+              {isAiAutopilot ? 'A.R.I.A. Autonomous AI completed the speedrun' : 'You completed the speedrun successfully'}!
             </p>
 
-            {/* Run Stats */}
             <div className="grid grid-cols-3 gap-2 bg-zinc-950 border border-zinc-800 p-3 rounded-xl my-4 text-left font-mono">
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase">Clear Time</div>
                 <div className="text-sm font-bold text-white">{runStats.time.toFixed(1)}s</div>
               </div>
               <div>
-                <div className="text-[10px] text-zinc-500 uppercase">$COINs</div>
-                <div className="text-sm font-bold text-amber-400">+{runStats.coins}</div>
+                <div className="text-[10px] text-zinc-500 uppercase">Shards</div>
+                <div className="text-sm font-bold text-emerald-400">+{runStats.shards}</div>
               </div>
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase">Score</div>
-                <div className="text-sm font-bold text-emerald-400">{runStats.score}</div>
+                <div className="text-sm font-bold text-cyan-400">{runStats.score}</div>
               </div>
             </div>
 
-            {/* Solana Attestation */}
             {attestationSig ? (
               <div className="bg-emerald-950/40 border border-emerald-500/40 p-3 rounded-xl text-left font-mono mb-4">
                 <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
@@ -816,7 +797,7 @@ export default function MarioGame({
                 className="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 font-black py-3 rounded-xl font-mono text-sm transition shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 mb-3 disabled:opacity-50"
               >
                 <Zap className={`w-4 h-4 ${isAttesting ? 'animate-spin' : ''}`} />
-                <span>{isAttesting ? 'Publishing to Solana...' : 'Attest Run on Solana Devnet'}</span>
+                <span>{isAttesting ? 'Broadcasting to Solana...' : 'Attest Run on Solana Devnet'}</span>
               </button>
             )}
 
@@ -828,7 +809,7 @@ export default function MarioGame({
                 }}
                 className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-xs font-bold py-2.5 rounded-xl transition"
               >
-                Next Level →
+                Next Sector →
               </button>
               <button
                 onClick={() => setShowClearModal(false)}
@@ -844,13 +825,13 @@ export default function MarioGame({
       {/* Game Over Modal */}
       {showGameOverModal && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border-2 border-red-500/60 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl">
-            <div className="text-4xl mb-2">💀</div>
-            <h2 className="text-2xl font-black font-mono text-white tracking-widest text-red-500">
-              GAME OVER
+          <div className="bg-zinc-900 border-2 border-red-500/60 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl font-mono">
+            <div className="text-4xl mb-2">⚡</div>
+            <h2 className="text-2xl font-black text-white tracking-widest text-red-500">
+              SYSTEM REBOOT NEEDED
             </h2>
-            <p className="text-xs font-mono text-zinc-400 my-3">
-              Solario ran out of lives in the Solana mempool!
+            <p className="text-xs text-zinc-400 my-3">
+              Nova ran out of energy shields in the mempool!
             </p>
             <button
               onClick={() => {
@@ -860,7 +841,7 @@ export default function MarioGame({
               className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl font-mono text-sm transition shadow-lg shadow-red-500/25 flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Continue (3 Lives)</span>
+              <span>Recharge Shields (3 Lives)</span>
             </button>
           </div>
         </div>

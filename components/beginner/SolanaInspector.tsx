@@ -166,7 +166,7 @@ export default function SolanaInspector({
                   Traditional blockchains like Ethereum have 12-second block times and fees up to $30 per transaction. This makes real-time gameplay impossible.
                 </p>
                 <p className="text-zinc-400 text-[11px]">
-                  Solana delivers <strong>400 millisecond slot times</strong> and transaction fees around <strong>0.000005 SOL ($0.0007)</strong>. That allows us to attest 60fps Mario speedruns, swap coins in an AMM, and run autonomous AI agents in real time!
+                  Solana delivers <strong>400 millisecond slot times</strong> and transaction fees around <strong>0.000005 SOL ($0.0007)</strong>. That allows us to attest 60fps platformer speedruns, swap shards on the AMM, and run autonomous AI agents in real time!
                 </p>
               </div>
 
@@ -184,16 +184,16 @@ export default function SolanaInspector({
                   <span>🤖 How the Autonomous AI Works</span>
                 </h4>
                 <p className="text-zinc-400 text-[11px]">
-                  Our AI Agent (&quot;Toad AI&quot;) is not a fake UI bot. It holds its own dedicated Solana keypair, scans level tiles ahead, calculates jump parabolic physics in real time, and autonomously signs speedrun attestations with its own wallet on Solana Devnet!
+                  Our AI Agent (&quot;A.R.I.A.&quot;) is not a fake UI bot. It holds its own dedicated Solana keypair, scans level tiles ahead, calculates jump parabolic physics in real time, and autonomously signs speedrun attestations with its own wallet on Solana Devnet!
                 </p>
               </div>
 
               <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
                 <h4 className="text-sm font-black text-white mb-2 flex items-center gap-2">
-                  <span>🪙 Mushroom Swap AMM Formula</span>
+                  <span>🪙 Quantum Swap AMM Formula</span>
                 </h4>
                 <p className="text-zinc-400 text-[11px]">
-                  The in-game DEX uses the constant product equation: <code>x * y = k</code>. When you sell $COINs collected in Mario levels, the liquidity pool automatically computes your SOL output, updates the bonding curve reserves, and charges a 0.3% LP fee.
+                  The in-game DEX uses the constant product equation: <code>x * y = k</code>. When you sell $SHARDs collected in cyber levels, the liquidity pool automatically computes your SOL output, updates the bonding curve reserves, and charges a 0.3% LP fee.
                 </p>
               </div>
             </div>

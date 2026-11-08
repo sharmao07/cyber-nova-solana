@@ -17,11 +17,7 @@ import {
   Wallet, 
   Volume2, 
   VolumeX, 
-  RefreshCw, 
   ShieldCheck, 
-  ExternalLink, 
-  Coins, 
-  Activity,
   Copy,
   Check
 } from 'lucide-react';
@@ -50,18 +46,14 @@ export default function Header({
     const w = getOrCreateBurnerWallet();
     setWallet(w);
 
-    // Initial balance & cluster status
     getAccountBalance(w.publicKeyBase58).then(bal => {
       setBalance(bal);
       if (onBalanceUpdate) onBalanceUpdate(bal);
     });
 
     fetchClusterStatus().then(setCluster);
-
-    // Check audio mute state
     setIsMuted(sounds.isMuted);
 
-    // Refresh telemetry every 15s
     const interval = setInterval(() => {
       fetchClusterStatus().then(setCluster);
       if (w) {
@@ -83,7 +75,6 @@ export default function Header({
     try {
       const res = await requestDevnetAirdrop(wallet.publicKeyBase58, 0.5);
       if (res.success) {
-        // Poll for updated balance
         setTimeout(async () => {
           const newBal = await getAccountBalance(wallet.publicKeyBase58);
           setBalance(newBal);
@@ -119,22 +110,22 @@ export default function Header({
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
         {/* Brand / Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 via-amber-500 to-emerald-400 p-0.5 shadow-lg shadow-red-500/20 flex items-center justify-center">
-            <div className="w-full h-full bg-zinc-950 rounded-[7px] flex items-center justify-center text-xl">
-              🍄
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 via-emerald-400 to-purple-600 p-0.5 shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+            <div className="w-full h-full bg-zinc-950 rounded-[7px] flex items-center justify-center text-xl text-cyan-400">
+              ⚡
             </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-base font-black tracking-wider text-white">
-                SUPER <span className="text-emerald-400">SOLARIO</span>
+                CYBER <span className="text-cyan-400">NOVA</span>
               </span>
               <span className="text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                 Solana Devnet
               </span>
             </div>
             <p className="text-[11px] text-zinc-400 hidden sm:block">
-              On-Chain Mario Platformer • Autonomous AI • DeFi AMM & Yield
+              Sol-Runner Cyber-Platformer • Autonomous AI • DeFi AMM & Staking
             </p>
           </div>
         </div>
@@ -160,11 +151,11 @@ export default function Header({
 
         {/* User Balance & Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* In-Game $COIN Counter */}
-          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-amber-300">
-            <Coins className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+          {/* Energy Shards Counter */}
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-emerald-300">
+            <Zap className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
             <span>{inGameCoins}</span>
-            <span className="text-[10px] text-amber-400/80">$COIN</span>
+            <span className="text-[10px] text-emerald-400/80">$SHARD</span>
           </div>
 
           {/* Devnet SOL Wallet Card */}
@@ -174,7 +165,7 @@ export default function Header({
               title="Click to copy public address"
               className="flex items-center gap-1.5 text-xs font-mono text-zinc-300 hover:text-white transition"
             >
-              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+              <Wallet className="w-3.5 h-3.5 text-cyan-400" />
               <span>{shortAddr}</span>
               {copied ? (
                 <Check className="w-3 h-3 text-emerald-400" />
@@ -193,7 +184,7 @@ export default function Header({
             onClick={handleAirdrop}
             disabled={isAirdropping}
             title="Instant 1-Click Airdrop of 0.5 Devnet SOL from funded treasury"
-            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-md shadow-emerald-500/20 disabled:opacity-50"
+            className="flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-zinc-950 font-bold px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-md shadow-cyan-500/20 disabled:opacity-50"
           >
             <Zap className={`w-3.5 h-3.5 ${isAirdropping ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Airdrop</span>
@@ -206,7 +197,7 @@ export default function Header({
             title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
             className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition"
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
           </button>
 
           {/* Solana Inspector Button */}

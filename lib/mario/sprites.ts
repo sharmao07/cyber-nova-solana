@@ -1,59 +1,58 @@
-// Procedural Pixel Art Sprites for Super Solario
-// Renders authentic NES / 16-bit arcade sprites onto Canvas 2D contexts
+// Procedural Retro Pixel Art Sprites for CYBER NOVA: Sol-Runner Odyssey
+// Original Futuristic Cyber-Platformer IP for Solana
 
-import { Player, Enemy, TileType } from './types';
+import { Player, Enemy, TileType, PoppingShardEntity } from './types';
 
 export const TILE_SIZE = 32;
 
-// Standard Mario Palette (with Solana themed colors!)
+// Original Cyber-Runner Palette
 export const COLORS = {
-  // Mario
-  marioHatRed: '#E52521',
-  marioOverallsBlue: '#0020C2',
-  marioSkin: '#FCD8A8',
-  marioBrownHair: '#6A3805',
-  
-  // Fire Mario
-  fireWhite: '#FFFFFF',
-  fireRed: '#E52521',
-
-  // Star Mario Rainbow Cycles
-  starColors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#8B00FF', '#14F195', '#9945FF'],
-
-  // Solana
+  // Nova Base
+  visorCyan: '#00FFFF',
+  visorGlow: '#80FFFF',
+  jacketDark: '#121324',
+  jacketIndigo: '#2D1B69',
   solanaGreen: '#14F195',
   solanaPurple: '#9945FF',
-  solanaDark: '#121212',
+  bootsChrome: '#CCCCCC',
+  bootsGlow: '#00FFAA',
+  skinWarm: '#FFDFC4',
+
+  // Power Up Variants
+  overchargeGold: '#FFD700',
+  plasmaWhite: '#FFFFFF',
+  plasmaOrange: '#FF5500',
+
+  // Hyper Prismatic Colors
+  hyperColors: ['#00FFFF', '#14F195', '#9945FF', '#FF0055', '#FFD700', '#00AAFF'],
 
   // Enemies
-  goombaBody: '#B85020',
-  goombaFeet: '#301808',
-  koopaGreen: '#00A800',
-  koopaYellow: '#FCB000',
-  koopaShellRed: '#D82800',
-  piranhaRed: '#D82800',
-  bowserGreen: '#248024',
-  bowserOrange: '#FC7400',
-  bowserSpikes: '#F8F8F8',
+  fudBotBody: '#4B5563',
+  fudBotEyeRed: '#EF4444',
+  fudBotSparks: '#F59E0B',
+  shieldOrbBlue: '#3B82F6',
+  shieldOrbCore: '#60A5FA',
+  macroTitanArmor: '#1E293B',
+  macroTitanRed: '#DC2626',
+  macroTitanGold: '#F59E0B',
 
-  // Tiles & Environment
-  groundBrown: '#C84C0C',
-  groundTopGreen: '#00A800',
-  brickBrown: '#B84418',
-  brickMortar: '#000000',
-  questionYellow: '#FC9838',
-  metalGrey: '#888888',
-  pipeGreenLight: '#00D800',
-  pipeGreenDark: '#006800',
-  coinGold: '#FCB000',
-  cloudWhite: '#FFFFFF',
-  lavaRed: '#E81C00',
-  lavaOrange: '#FFA800',
-  castleBrick: '#686868',
+  // Environment
+  circuitFloor: '#0F172A',
+  circuitTrim: '#14F195',
+  carbonBrick: '#1E1B4B',
+  carbonBrickLine: '#4338CA',
+  cacheGold: '#F59E0B',
+  cacheCyan: '#06B6D4',
+  spentAlloy: '#334155',
+  pipeNeonGreen: '#10B981',
+  pipeNeonDark: '#047857',
+  plasmaRed: '#E11D48',
+  abyssOrange: '#FB923C',
+  pylonCyan: '#22D3EE',
 };
 
 /**
- * Draws the player (Solario) at (x, y) with proper scale, animation frame, and direction.
+ * Draws the cyber-runner protagonist (Nova)
  */
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
@@ -67,7 +66,6 @@ export function drawPlayer(
 
   ctx.save();
 
-  // Flip horizontally if facing left
   if (player.facingLeft) {
     ctx.translate(drawX + player.w, drawY);
     ctx.scale(-1, 1);
@@ -75,160 +73,203 @@ export function drawPlayer(
     ctx.translate(drawX, drawY);
   }
 
-  // Invincibility blink
+  // Invincibility flicker
   if (player.invincibleTimer > 0 && Math.floor(player.invincibleTimer / 4) % 2 === 0) {
     ctx.restore();
     return;
   }
 
-  const isSuper = player.powerUp === 'super' || player.powerUp === 'fire' || player.powerUp === 'star';
-  const isStar = player.starTimer > 0;
+  const isOvercharged = player.powerUp === 'overcharge' || player.powerUp === 'plasma' || player.powerUp === 'hyper';
+  const isHyper = player.hyperTimer > 0;
 
   // Resolve palette
-  let shirtColor = COLORS.marioHatRed;
-  let overallsColor = COLORS.marioOverallsBlue;
+  let visorColor = COLORS.visorCyan;
+  let suitPrimary = COLORS.jacketIndigo;
+  let suitSecondary = COLORS.solanaGreen;
 
   if (skinType === 'gold') {
-    shirtColor = '#FFD700';
-    overallsColor = '#FFA500';
+    suitPrimary = '#B45309';
+    suitSecondary = '#FDE047';
+    visorColor = '#FEF08A';
   } else if (skinType === 'shadow') {
-    shirtColor = '#2A2A2A';
-    overallsColor = '#14F195';
-  } else if (player.powerUp === 'fire') {
-    shirtColor = COLORS.fireWhite;
-    overallsColor = COLORS.fireRed;
+    suitPrimary = '#09090B';
+    suitSecondary = '#10B981';
+    visorColor = '#A7F3D0';
+  } else if (player.powerUp === 'plasma') {
+    suitPrimary = '#1E1B4B';
+    suitSecondary = '#FB923C';
+    visorColor = '#F97316';
   }
 
-  if (isStar) {
-    const colorIndex = Math.floor(globalFrame / 3) % COLORS.starColors.length;
-    shirtColor = COLORS.starColors[colorIndex];
-    overallsColor = COLORS.starColors[(colorIndex + 3) % COLORS.starColors.length];
+  if (isHyper) {
+    const colorIdx = Math.floor(globalFrame / 3) % COLORS.hyperColors.length;
+    visorColor = COLORS.hyperColors[colorIdx];
+    suitSecondary = COLORS.hyperColors[(colorIdx + 2) % COLORS.hyperColors.length];
   }
 
-  // Draw Pixel Model
-  const scale = isSuper ? 2 : 1.5;
+  const scale = isOvercharged ? 2 : 1.5;
 
   if (player.isDying) {
-    // Solario dead face / pose
-    drawDeadSolario(ctx, shirtColor, overallsColor, scale);
+    drawDeadNova(ctx, suitPrimary, suitSecondary, scale);
   } else if (!player.grounded) {
-    // Jump Pose
-    drawJumpSolario(ctx, shirtColor, overallsColor, scale);
-  } else if (Math.abs(player.vx) > 0.5) {
-    // Run cycle (3 frames)
-    const runFrame = Math.floor(player.walkFrame) % 3;
-    drawRunSolario(ctx, shirtColor, overallsColor, scale, runFrame);
+    drawJumpNova(ctx, visorColor, suitPrimary, suitSecondary, scale, globalFrame);
+  } else if (Math.abs(player.vx) > 0.4) {
+    const runFrame = Math.floor(player.walkFrame) % 4;
+    drawRunNova(ctx, visorColor, suitPrimary, suitSecondary, scale, runFrame, globalFrame);
   } else {
-    // Idle Pose
-    drawIdleSolario(ctx, shirtColor, overallsColor, scale);
+    drawIdleNova(ctx, visorColor, suitPrimary, suitSecondary, scale, globalFrame);
   }
 
   ctx.restore();
 }
 
-function drawIdleSolario(ctx: CanvasRenderingContext2D, shirt: string, overalls: string, scale: number) {
-  // Hat
-  ctx.fillStyle = shirt;
-  ctx.fillRect(3 * scale, 0, 7 * scale, 2 * scale);
-  ctx.fillRect(2 * scale, 2 * scale, 10 * scale, 1.5 * scale);
+function drawIdleNova(
+  ctx: CanvasRenderingContext2D,
+  visor: string,
+  primary: string,
+  accent: string,
+  s: number,
+  frame: number
+) {
+  // Helmet
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(3 * s, 0, 7 * s, 5 * s);
 
-  // Face & Hair
-  ctx.fillStyle = COLORS.marioSkin;
-  ctx.fillRect(3 * scale, 3.5 * scale, 8 * scale, 3 * scale);
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(1 * scale, 3 * scale, 3 * scale, 3.5 * scale); // hair
-  ctx.fillRect(6 * scale, 4.5 * scale, 1.5 * scale, 1.5 * scale); // eye
-  ctx.fillRect(7 * scale, 5.5 * scale, 4 * scale, 1.5 * scale); // mustache
+  // Neon Visor Strip
+  ctx.fillStyle = visor;
+  ctx.fillRect(5 * s, 2 * s, 5 * s, 1.8 * s);
 
-  // Torso / Overalls
-  ctx.fillStyle = shirt;
-  ctx.fillRect(2 * scale, 6.5 * scale, 8 * scale, 4 * scale);
-  ctx.fillStyle = overalls;
-  ctx.fillRect(3 * scale, 8 * scale, 6 * scale, 4 * scale);
-  ctx.fillRect(2 * scale, 9 * scale, 8 * scale, 3 * scale);
+  // Visor Pulse Glimmer
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect((7 + Math.sin(frame * 0.1) * 1.5) * s, 2 * s, 1.2 * s, 1.8 * s);
 
-  // Shoes
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(1 * scale, 12 * scale, 4 * scale, 2 * scale);
-  ctx.fillRect(7 * scale, 12 * scale, 4 * scale, 2 * scale);
+  // Scarf / Cyber Collar
+  ctx.fillStyle = accent;
+  ctx.fillRect(2 * s, 5 * s, 8 * s, 1.5 * s);
+
+  // Torso / Suit
+  ctx.fillStyle = primary;
+  ctx.fillRect(3 * s, 6.5 * s, 6 * s, 4.5 * s);
+  ctx.fillStyle = accent;
+  ctx.fillRect(4.5 * s, 7 * s, 3 * s, 3 * s); // Solana chest emblem
+
+  // Arms
+  ctx.fillStyle = primary;
+  ctx.fillRect(1.5 * s, 6.5 * s, 1.5 * s, 4 * s);
+  ctx.fillRect(9 * s, 6.5 * s, 1.5 * s, 4 * s);
+
+  // Mag-Boots
+  ctx.fillStyle = COLORS.bootsChrome;
+  ctx.fillRect(2 * s, 11 * s, 3.5 * s, 3 * s);
+  ctx.fillRect(6.5 * s, 11 * s, 3.5 * s, 3 * s);
+
+  // Boot Thruster Glow
+  ctx.fillStyle = COLORS.bootsGlow;
+  ctx.fillRect(2 * s, 13.5 * s, 3.5 * s, 0.8 * s);
+  ctx.fillRect(6.5 * s, 13.5 * s, 3.5 * s, 0.8 * s);
 }
 
-function drawRunSolario(ctx: CanvasRenderingContext2D, shirt: string, overalls: string, scale: number, frame: number) {
-  // Hat
-  ctx.fillStyle = shirt;
-  ctx.fillRect(3 * scale, 0, 7 * scale, 2 * scale);
-  ctx.fillRect(2 * scale, 2 * scale, 10 * scale, 1.5 * scale);
+function drawRunNova(
+  ctx: CanvasRenderingContext2D,
+  visor: string,
+  primary: string,
+  accent: string,
+  s: number,
+  runFrame: number,
+  globalFrame: number
+) {
+  // Forward lean
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(4 * s, 0.5 * s, 7 * s, 4.5 * s);
 
-  // Face & Hair
-  ctx.fillStyle = COLORS.marioSkin;
-  ctx.fillRect(3 * scale, 3.5 * scale, 8 * scale, 3 * scale);
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(1 * scale, 3 * scale, 3 * scale, 3.5 * scale);
-  ctx.fillRect(6 * scale, 4.5 * scale, 1.5 * scale, 1.5 * scale);
-  ctx.fillRect(7 * scale, 5.5 * scale, 4 * scale, 1.5 * scale);
+  // Visor
+  ctx.fillStyle = visor;
+  ctx.fillRect(6 * s, 2 * s, 5 * s, 1.8 * s);
+
+  // Trailing Energy Scarf
+  ctx.fillStyle = accent;
+  ctx.fillRect(1 * s, 4.5 * s, 3.5 * s, 1.5 * s);
+  ctx.fillRect(0 * s, 5 * s, 2 * s, 1.2 * s);
 
   // Torso
-  ctx.fillStyle = shirt;
-  ctx.fillRect(2 * scale, 6.5 * scale, 8 * scale, 4 * scale);
-  ctx.fillStyle = overalls;
-  ctx.fillRect(3 * scale, 8 * scale, 6 * scale, 4 * scale);
-  ctx.fillRect(2 * scale, 9 * scale, 8 * scale, 3 * scale);
+  ctx.fillStyle = primary;
+  ctx.fillRect(3.5 * s, 5.5 * s, 6 * s, 5 * s);
 
-  // Legs in run stride
-  ctx.fillStyle = COLORS.marioBrownHair;
-  if (frame === 0) {
-    ctx.fillRect(0 * scale, 12 * scale, 4 * scale, 2 * scale);
-    ctx.fillRect(8 * scale, 11 * scale, 4 * scale, 2 * scale);
-  } else if (frame === 1) {
-    ctx.fillRect(2 * scale, 12 * scale, 4 * scale, 2 * scale);
-    ctx.fillRect(6 * scale, 12 * scale, 4 * scale, 2 * scale);
+  // Running Legs
+  ctx.fillStyle = COLORS.bootsChrome;
+  if (runFrame === 0) {
+    ctx.fillRect(1 * s, 10.5 * s, 4 * s, 3.5 * s);
+    ctx.fillRect(7.5 * s, 9.5 * s, 4 * s, 3.5 * s);
+  } else if (runFrame === 1) {
+    ctx.fillRect(3 * s, 10.5 * s, 3.5 * s, 3.5 * s);
+    ctx.fillRect(6.5 * s, 10.5 * s, 3.5 * s, 3.5 * s);
+  } else if (runFrame === 2) {
+    ctx.fillRect(7.5 * s, 10.5 * s, 4 * s, 3.5 * s);
+    ctx.fillRect(1 * s, 9.5 * s, 4 * s, 3.5 * s);
   } else {
-    ctx.fillRect(8 * scale, 12 * scale, 4 * scale, 2 * scale);
-    ctx.fillRect(0 * scale, 11 * scale, 4 * scale, 2 * scale);
+    ctx.fillRect(4 * s, 10.5 * s, 3.5 * s, 3.5 * s);
+    ctx.fillRect(5.5 * s, 10.5 * s, 3.5 * s, 3.5 * s);
   }
+
+  // Thruster trail sparks
+  ctx.fillStyle = COLORS.solanaGreen;
+  ctx.fillRect(0 * s, 12 * s, 1.5 * s, 1.5 * s);
 }
 
-function drawJumpSolario(ctx: CanvasRenderingContext2D, shirt: string, overalls: string, scale: number) {
-  // Hat
-  ctx.fillStyle = shirt;
-  ctx.fillRect(3 * scale, 0, 7 * scale, 2 * scale);
-  ctx.fillRect(2 * scale, 2 * scale, 10 * scale, 1.5 * scale);
+function drawJumpNova(
+  ctx: CanvasRenderingContext2D,
+  visor: string,
+  primary: string,
+  accent: string,
+  s: number,
+  globalFrame: number
+) {
+  // Helmet
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(3 * s, 0, 7 * s, 4.5 * s);
 
-  // Face
-  ctx.fillStyle = COLORS.marioSkin;
-  ctx.fillRect(3 * scale, 3.5 * scale, 8 * scale, 3 * scale);
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(1 * scale, 3 * scale, 3 * scale, 3.5 * scale);
-  ctx.fillRect(6 * scale, 4.5 * scale, 1.5 * scale, 1.5 * scale);
-  ctx.fillRect(7 * scale, 5.5 * scale, 4 * scale, 1.5 * scale);
+  // Visor
+  ctx.fillStyle = visor;
+  ctx.fillRect(5 * s, 1.5 * s, 5 * s, 1.8 * s);
 
-  // Torso & Raised Arm
-  ctx.fillStyle = shirt;
-  ctx.fillRect(1 * scale, 5 * scale, 3 * scale, 5 * scale);
-  ctx.fillRect(8 * scale, 4 * scale, 3 * scale, 5 * scale); // raised arm
-  ctx.fillStyle = overalls;
-  ctx.fillRect(3 * scale, 8 * scale, 6 * scale, 4 * scale);
+  // Cyber Scarf Flapping Down
+  ctx.fillStyle = accent;
+  ctx.fillRect(2 * s, 4.5 * s, 7 * s, 1.5 * s);
+  ctx.fillRect(1 * s, 6 * s, 2 * s, 2.5 * s);
 
-  // Splayed legs
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(0 * scale, 11 * scale, 4 * scale, 2 * scale);
-  ctx.fillRect(8 * scale, 12 * scale, 4 * scale, 2 * scale);
+  // Torso
+  ctx.fillStyle = primary;
+  ctx.fillRect(3 * s, 6 * s, 6 * s, 4.5 * s);
+
+  // Jet Boots with active ignition flame!
+  ctx.fillStyle = COLORS.bootsChrome;
+  ctx.fillRect(1.5 * s, 10.5 * s, 3.5 * s, 3 * s);
+  ctx.fillRect(7 * s, 11 * s, 3.5 * s, 2.5 * s);
+
+  // Propulsion Flames
+  ctx.fillStyle = COLORS.visorCyan;
+  ctx.fillRect(2 * s, 13.5 * s, 2.5 * s, 3 * s);
+  ctx.fillRect(7.5 * s, 13.5 * s, 2.5 * s, 2.5 * s);
 }
 
-function drawDeadSolario(ctx: CanvasRenderingContext2D, shirt: string, overalls: string, scale: number) {
-  ctx.fillStyle = shirt;
-  ctx.fillRect(2 * scale, 2 * scale, 8 * scale, 3 * scale);
-  ctx.fillStyle = COLORS.marioSkin;
-  ctx.fillRect(3 * scale, 5 * scale, 6 * scale, 4 * scale);
-  ctx.fillStyle = overalls;
-  ctx.fillRect(2 * scale, 9 * scale, 8 * scale, 4 * scale);
-  ctx.fillStyle = COLORS.marioBrownHair;
-  ctx.fillRect(1 * scale, 13 * scale, 4 * scale, 2 * scale);
-  ctx.fillRect(7 * scale, 13 * scale, 4 * scale, 2 * scale);
+function drawDeadNova(
+  ctx: CanvasRenderingContext2D,
+  primary: string,
+  accent: string,
+  s: number
+) {
+  // Glitching voxel fragments
+  ctx.fillStyle = '#EF4444';
+  ctx.fillRect(2 * s, 2 * s, 8 * s, 4 * s);
+  ctx.fillStyle = COLORS.visorCyan;
+  ctx.fillRect(3 * s, 6 * s, 6 * s, 3 * s);
+  ctx.fillStyle = accent;
+  ctx.fillRect(1 * s, 9 * s, 3 * s, 2 * s);
+  ctx.fillRect(6 * s, 10 * s, 4 * s, 2 * s);
 }
 
 /**
- * Draws enemies (Goomba, Koopa, Piranha, Bowser)
+ * Draws original enemies (FUD-Bot, Shield-Orb, Plasma Sentry, Macro-Titan)
  */
 export function drawEnemy(
   ctx: CanvasRenderingContext2D,
@@ -248,196 +289,145 @@ export function drawEnemy(
     ctx.translate(drawX, drawY);
   }
 
-  if (enemy.type === 'goomba') {
-    drawGoomba(ctx, enemy, globalFrame);
-  } else if (enemy.type === 'koopa') {
-    drawKoopa(ctx, enemy, globalFrame);
-  } else if (enemy.type === 'piranha') {
-    drawPiranha(ctx, enemy, globalFrame);
-  } else if (enemy.type === 'bowser') {
-    drawBowser(ctx, enemy, globalFrame);
+  if (enemy.type === 'fud_bot') {
+    drawFudBot(ctx, enemy, globalFrame);
+  } else if (enemy.type === 'shield_orb') {
+    drawShieldOrb(ctx, enemy, globalFrame);
+  } else if (enemy.type === 'plasma_sentry') {
+    drawPlasmaSentry(ctx, enemy, globalFrame);
+  } else if (enemy.type === 'macro_titan') {
+    drawMacroTitan(ctx, enemy, globalFrame);
   }
 
   ctx.restore();
 }
 
-function drawGoomba(ctx: CanvasRenderingContext2D, enemy: Enemy, globalFrame: number) {
-  if (enemy.state === 'squished') {
-    // Squished flat Goomba
-    ctx.fillStyle = COLORS.goombaBody;
-    ctx.fillRect(2, 22, 28, 10);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(6, 24, 6, 3);
-    ctx.fillRect(20, 24, 6, 3);
+function drawFudBot(ctx: CanvasRenderingContext2D, enemy: Enemy, frame: number) {
+  if (enemy.state === 'crushed') {
+    // Crushed mechanical scrap
+    ctx.fillStyle = COLORS.fudBotBody;
+    ctx.fillRect(2, 22, 24, 6);
+    ctx.fillStyle = COLORS.fudBotEyeRed;
+    ctx.fillRect(8, 23, 12, 3);
     return;
   }
 
-  // Mushroom-shaped Goomba head
-  ctx.fillStyle = COLORS.goombaBody;
+  // Armored Hex Chassis
+  ctx.fillStyle = COLORS.fudBotBody;
   ctx.beginPath();
-  ctx.roundRect(4, 2, 24, 18, [8, 8, 2, 2]);
+  ctx.roundRect(4, 4, 20, 16, 4);
   ctx.fill();
 
-  // Face stem
-  ctx.fillStyle = '#FFDDAA';
-  ctx.fillRect(8, 14, 16, 10);
+  // Red Optical Sensor Visor
+  ctx.fillStyle = COLORS.fudBotEyeRed;
+  ctx.fillRect(6, 8, 16, 5);
 
-  // Angry eyes
+  // Scanning laser dot
+  const scanX = 8 + (Math.sin(frame * 0.2) + 1) * 5;
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(9, 14, 5, 6);
-  ctx.fillRect(18, 14, 5, 6);
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(11, 15, 3, 5);
-  ctx.fillRect(18, 15, 3, 5);
+  ctx.fillRect(scanX, 9, 3, 3);
 
-  // Walking feet cycle
-  const foot = Math.floor(globalFrame / 10) % 2;
-  ctx.fillStyle = COLORS.goombaFeet;
-  if (foot === 0) {
-    ctx.fillRect(2, 24, 11, 7);
-    ctx.fillRect(19, 26, 10, 5);
+  // Antenna
+  ctx.fillStyle = '#9CA3AF';
+  ctx.fillRect(13, 0, 2, 4);
+  ctx.fillStyle = COLORS.fudBotEyeRed;
+  ctx.fillRect(12, 0, 4, 2);
+
+  // Robotic Stomp Legs (Alternating 2-frame stride)
+  const legStep = Math.floor(frame / 8) % 2 === 0;
+  ctx.fillStyle = '#374151';
+  if (legStep) {
+    ctx.fillRect(3, 20, 6, 8);
+    ctx.fillRect(19, 18, 6, 10);
   } else {
-    ctx.fillRect(3, 26, 10, 5);
-    ctx.fillRect(19, 24, 11, 7);
+    ctx.fillRect(3, 18, 6, 10);
+    ctx.fillRect(19, 20, 6, 8);
   }
 }
 
-function drawKoopa(ctx: CanvasRenderingContext2D, enemy: Enemy, globalFrame: number) {
-  if (enemy.state === 'shell_idle' || enemy.state === 'shell_moving') {
-    // Retracted Koopa Shell
-    ctx.fillStyle = COLORS.koopaShellRed;
+function drawShieldOrb(ctx: CanvasRenderingContext2D, enemy: Enemy, frame: number) {
+  if (enemy.state === 'sphere_idle' || enemy.state === 'sphere_rolling') {
+    // Spherical Kinetic Energy Shell
+    ctx.fillStyle = COLORS.shieldOrbBlue;
     ctx.beginPath();
-    ctx.roundRect(4, 10, 24, 20, [10, 10, 4, 4]);
+    ctx.arc(14, 16, 12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Shell pattern
+    ctx.strokeStyle = COLORS.visorCyan;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Spinning core
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(8, 14, 16, 4);
-    ctx.fillRect(10, 20, 12, 4);
+    const angle = (frame * (enemy.state === 'sphere_rolling' ? 0.3 : 0.05));
+    ctx.fillRect(14 + Math.cos(angle) * 5 - 2, 16 + Math.sin(angle) * 5 - 2, 4, 4);
     return;
   }
 
-  // Walking Koopa Troopa
-  // Head
-  ctx.fillStyle = COLORS.koopaYellow;
-  ctx.fillRect(14, 2, 12, 10);
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(20, 4, 3, 4); // eye
-
-  // Beak
-  ctx.fillStyle = '#FFAA00';
-  ctx.fillRect(22, 6, 6, 5);
-
-  // Shell
-  ctx.fillStyle = COLORS.koopaGreen;
+  // Hovering Security Drone
+  ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  ctx.roundRect(6, 10, 18, 16, [8, 4, 4, 6]);
+  ctx.roundRect(4, 6, 20, 16, 6);
   ctx.fill();
 
-  // Feet
-  const foot = Math.floor(globalFrame / 8) % 2;
-  ctx.fillStyle = COLORS.koopaYellow;
-  if (foot === 0) {
-    ctx.fillRect(6, 26, 8, 6);
-    ctx.fillRect(16, 28, 8, 4);
-  } else {
-    ctx.fillRect(6, 28, 8, 4);
-    ctx.fillRect(16, 26, 8, 6);
+  // Cyan Energy Shield Band
+  ctx.fillStyle = COLORS.visorCyan;
+  ctx.fillRect(6, 11, 16, 5);
+
+  // Dual Sensor Eyes
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(8, 12, 3, 3);
+  ctx.fillRect(17, 12, 3, 3);
+
+  // Hover thrusters
+  ctx.fillStyle = COLORS.solanaGreen;
+  ctx.fillRect(7, 22, 4, 4);
+  ctx.fillRect(17, 22, 4, 4);
+}
+
+function drawPlasmaSentry(ctx: CanvasRenderingContext2D, enemy: Enemy, frame: number) {
+  // Laser vent emitting upward pulse
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(8, 12, 16, 18);
+
+  const laserPulse = Math.sin(frame * 0.15) > 0;
+  if (laserPulse) {
+    ctx.fillStyle = '#EF4444';
+    ctx.fillRect(12, 0, 8, 12);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(14, 0, 4, 12);
   }
 }
 
-function drawPiranha(ctx: CanvasRenderingContext2D, enemy: Enemy, globalFrame: number) {
-  // Snapping piranha plant inside pipe
-  const snap = Math.floor(globalFrame / 8) % 2 === 0;
-
-  // Stem
-  ctx.fillStyle = '#00A800';
-  ctx.fillRect(12, 16, 8, 16);
-
-  // Leaves
-  ctx.fillRect(6, 22, 6, 4);
-  ctx.fillRect(20, 22, 6, 4);
-
-  // Red head with white polka dots
-  ctx.fillStyle = COLORS.piranhaRed;
+function drawMacroTitan(ctx: CanvasRenderingContext2D, enemy: Enemy, frame: number) {
+  // 48x48 Colossal Mech Boss
+  ctx.fillStyle = COLORS.macroTitanArmor;
   ctx.beginPath();
-  ctx.roundRect(4, 2, 24, 18, 6);
+  ctx.roundRect(4, 8, 38, 28, 8);
   ctx.fill();
 
-  // White polka dots
+  // Glowing Quad-Visor Array
+  ctx.fillStyle = COLORS.macroTitanRed;
+  ctx.fillRect(10, 14, 26, 6);
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(8, 5, 4, 4);
-  ctx.fillRect(18, 4, 4, 4);
-  ctx.fillRect(10, 14, 3, 3);
+  ctx.fillRect(14, 15, 4, 4);
+  ctx.fillRect(28, 15, 4, 4);
 
-  // White teeth
-  ctx.fillStyle = '#FFFFFF';
-  if (snap) {
-    ctx.fillRect(6, 9, 20, 4); // closed jaws
-  } else {
-    ctx.fillRect(6, 7, 5, 4);
-    ctx.fillRect(15, 7, 5, 4);
-    ctx.fillRect(8, 13, 5, 4);
-    ctx.fillRect(17, 13, 5, 4);
-  }
-}
+  // Heavy Shoulder Cannons
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(0, 4, 8, 12);
+  ctx.fillRect(38, 4, 8, 12);
 
-function drawBowser(ctx: CanvasRenderingContext2D, enemy: Enemy, globalFrame: number) {
-  // Bowser: 48x48 pixel boss
-  const breathe = Math.floor(globalFrame / 15) % 2 === 0;
+  // Heavy Hydraulic Tread Legs
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(6, 36, 12, 10);
+  ctx.fillRect(28, 36, 12, 10);
 
-  // Spiked green Shell
-  ctx.fillStyle = COLORS.bowserGreen;
+  // Core Plasma Reactor Glow
+  ctx.fillStyle = COLORS.macroTitanGold;
   ctx.beginPath();
-  ctx.roundRect(4, 12, 28, 30, [14, 14, 6, 6]);
+  ctx.arc(23, 28, 5, 0, Math.PI * 2);
   ctx.fill();
-
-  // Spikes on shell
-  ctx.fillStyle = COLORS.bowserSpikes;
-  ctx.fillRect(8, 8, 4, 6);
-  ctx.fillRect(18, 6, 4, 6);
-  ctx.fillRect(26, 10, 4, 6);
-
-  // Orange horned Head
-  ctx.fillStyle = COLORS.bowserOrange;
-  ctx.fillRect(28, 8, 16, 20);
-
-  // Red hair crest
-  ctx.fillStyle = '#E52521';
-  ctx.fillRect(26, 2, 14, 8);
-
-  // Horns
-  ctx.fillStyle = '#FFF8E0';
-  ctx.fillRect(36, 0, 4, 6);
-
-  // Eye
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(34, 12, 5, 5);
-  ctx.fillStyle = '#E52521';
-  ctx.fillRect(36, 13, 3, 3);
-
-  // Snout & Fangs
-  ctx.fillStyle = '#FCB000';
-  ctx.fillRect(38, 16, 10, 10);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(40, 24, 3, 4);
-  ctx.fillRect(45, 24, 3, 4);
-
-  // Claws & Feet
-  ctx.fillStyle = COLORS.bowserOrange;
-  ctx.fillRect(8, 40, 14, 8);
-  ctx.fillRect(26, 40, 14, 8);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(6, 44, 4, 4);
-  ctx.fillRect(38, 44, 4, 4);
-
-  // Fire breath glow
-  if (breathe) {
-    ctx.fillStyle = '#FF4500';
-    ctx.beginPath();
-    ctx.arc(48, 20, 6, 0, Math.PI * 2);
-    ctx.fill();
-  }
 }
 
 /**
@@ -448,225 +438,213 @@ export function drawTile(
   tile: TileType,
   x: number,
   y: number,
-  theme: 'overworld' | 'underground' | 'sky' | 'castle',
+  theme: 'cyber_city' | 'mempool_cavern' | 'sky_uplink' | 'titan_citadel',
   globalFrame: number,
   bumpOffsetY: number = 0
 ) {
-  const drawY = y + bumpOffsetY;
-
+  const drawY = Math.round(y + bumpOffsetY);
   if (tile === 'empty') return;
 
-  if (tile === 'ground') {
-    if (theme === 'underground') {
-      ctx.fillStyle = '#0050A0';
-      ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-      ctx.fillStyle = '#003060';
-      ctx.fillRect(x + 2, drawY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-    } else if (theme === 'castle') {
-      ctx.fillStyle = '#505050';
-      ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-      ctx.fillStyle = '#383838';
-      ctx.fillRect(x + 2, drawY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-    } else {
-      // Overworld classic
-      ctx.fillStyle = COLORS.groundBrown;
-      ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-      ctx.fillStyle = COLORS.groundTopGreen;
-      ctx.fillRect(x, drawY, TILE_SIZE, 6);
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(x + 4, drawY + 12, 4, 4);
-      ctx.fillRect(x + 20, drawY + 20, 4, 4);
-    }
-  } else if (tile === 'brick') {
-    ctx.fillStyle = theme === 'underground' ? '#0060C0' : theme === 'castle' ? '#606060' : COLORS.brickBrown;
+  if (tile === 'circuit_floor' || tile === 'citadel_plating') {
+    // Cyberpunk Circuit Floor
+    ctx.fillStyle = theme === 'mempool_cavern' ? '#0F172A' : '#1E1B4B';
     ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.fillStyle = '#000000';
-    // Brick pattern lines
-    ctx.fillRect(x, drawY + 7, TILE_SIZE, 2);
-    ctx.fillRect(x, drawY + 15, TILE_SIZE, 2);
-    ctx.fillRect(x, drawY + 23, TILE_SIZE, 2);
-    ctx.fillRect(x + 15, drawY, 2, 7);
-    ctx.fillRect(x + 8, drawY + 8, 2, 7);
-    ctx.fillRect(x + 24, drawY + 8, 2, 7);
-    ctx.fillRect(x + 15, drawY + 16, 2, 7);
-  } else if (tile === 'question') {
-    // Animated pulsing ? block with Solana shine
-    ctx.fillStyle = COLORS.questionYellow;
+
+    // Glowing Neon Circuit Traces
+    ctx.fillStyle = theme === 'titan_citadel' ? '#DC2626' : COLORS.solanaGreen;
+    ctx.fillRect(x, drawY, TILE_SIZE, 3);
+    ctx.fillRect(x + 4, drawY + 8, 2, 8);
+    ctx.fillRect(x + 4, drawY + 16, 12, 2);
+    ctx.fillRect(x + 20, drawY + 12, 8, 2);
+    ctx.fillRect(x + 28, drawY + 12, 2, 10);
+  } else if (tile === 'carbon_brick') {
+    // Carbon-Nanotube Hex Brick
+    ctx.fillStyle = theme === 'mempool_cavern' ? '#1E293B' : '#2E1065';
     ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = '#4338CA';
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(x + 1, drawY + 1, TILE_SIZE - 2, TILE_SIZE - 2);
 
-    // 4 corner rivets
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 3, drawY + 3, 2, 2);
-    ctx.fillRect(x + TILE_SIZE - 5, drawY + 3, 2, 2);
-    ctx.fillRect(x + 3, drawY + TILE_SIZE - 5, 2, 2);
-    ctx.fillRect(x + TILE_SIZE - 5, drawY + TILE_SIZE - 5, 2, 2);
+    // Tech panel groove
+    ctx.fillStyle = '#6366F1';
+    ctx.fillRect(x + 6, drawY + 6, 8, 2);
+    ctx.fillRect(x + 18, drawY + 18, 8, 2);
+  } else if (tile === 'matrix_cache') {
+    // Holographic [ ? ] Cache Block
+    ctx.fillStyle = '#065F46'; // dark emerald base
+    ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
 
-    // Solana Green ? symbol
-    ctx.fillStyle = COLORS.solanaGreen;
-    ctx.font = 'bold 18px monospace';
+    // Golden / Cyan Animated Border
+    ctx.strokeStyle = COLORS.solanaGreen;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 2, drawY + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+    // Corner rivets
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(x + 4, drawY + 4, 3, 3);
+    ctx.fillRect(x + TILE_SIZE - 7, drawY + 4, 3, 3);
+    ctx.fillRect(x + 4, drawY + TILE_SIZE - 7, 3, 3);
+    ctx.fillRect(x + TILE_SIZE - 7, drawY + TILE_SIZE - 7, 3, 3);
+
+    // Pulsing Central Diamond / ? symbol
+    ctx.fillStyle = '#10B981';
+    ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('?', x + TILE_SIZE / 2, drawY + TILE_SIZE / 2);
-  } else if (tile === 'metal') {
-    // Empty spent block
-    ctx.fillStyle = COLORS.metalGrey;
+    ctx.fillText('◈', x + TILE_SIZE / 2, drawY + TILE_SIZE / 2);
+  } else if (tile === 'spent_alloy') {
+    // Deactivated metal block
+    ctx.fillStyle = COLORS.spentAlloy;
     ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = '#555555';
+    ctx.strokeStyle = '#1E293B';
     ctx.lineWidth = 2;
     ctx.strokeRect(x + 1, drawY + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-    // 4 corner dots
-    ctx.fillStyle = '#333333';
-    ctx.fillRect(x + 3, drawY + 3, 3, 3);
-    ctx.fillRect(x + TILE_SIZE - 6, drawY + 3, 3, 3);
-    ctx.fillRect(x + 3, drawY + TILE_SIZE - 6, 3, 3);
-    ctx.fillRect(x + TILE_SIZE - 6, drawY + TILE_SIZE - 6, 3, 3);
-  } else if (tile === 'pipe_tl') {
-    ctx.fillStyle = COLORS.pipeGreenLight;
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(x + 4, drawY + 4, 3, 3);
+    ctx.fillRect(x + TILE_SIZE - 7, drawY + 4, 3, 3);
+    ctx.fillRect(x + 4, drawY + TILE_SIZE - 7, 3, 3);
+    ctx.fillRect(x + TILE_SIZE - 7, drawY + TILE_SIZE - 7, 3, 3);
+  } else if (tile === 'transit_pipe_tl' || tile === 'transit_pipe_tr' || tile === 'transit_pipe_bl' || tile === 'transit_pipe_br') {
+    // Quantum Transit Pipeline
+    ctx.fillStyle = COLORS.pipeNeonGreen;
     ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.fillStyle = COLORS.pipeGreenDark;
-    ctx.fillRect(x + 2, drawY + 2, 6, TILE_SIZE - 4);
+    ctx.fillStyle = COLORS.pipeNeonDark;
+    ctx.fillRect(x + 3, drawY + 3, TILE_SIZE - 6, TILE_SIZE - 6);
     ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.strokeRect(x, drawY, TILE_SIZE, TILE_SIZE);
-  } else if (tile === 'pipe_tr') {
-    ctx.fillStyle = COLORS.pipeGreenLight;
-    ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.fillStyle = COLORS.pipeGreenDark;
-    ctx.fillRect(x + TILE_SIZE - 8, drawY + 2, 6, TILE_SIZE - 4);
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, drawY, TILE_SIZE, TILE_SIZE);
-  } else if (tile === 'pipe_bl' || tile === 'pipe_br') {
-    ctx.fillStyle = COLORS.pipeGreenLight;
-    ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, drawY, TILE_SIZE, TILE_SIZE);
-  } else if (tile === 'springboard') {
-    // Trampoline Springboard
-    ctx.fillStyle = '#D03030';
-    ctx.fillRect(x + 4, drawY + 20, 24, 12);
-    ctx.fillStyle = '#CCCCCC';
-    ctx.fillRect(x + 8, drawY + 10, 16, 10);
-    ctx.fillStyle = '#E52521';
-    ctx.fillRect(x + 2, drawY + 4, 28, 6);
-  } else if (tile === 'lava') {
-    // Bubbling castle lava
+  } else if (tile === 'launch_pad') {
+    // Kinetic Launchpad
+    ctx.fillStyle = '#DC2626';
+    ctx.fillRect(x + 2, drawY + 22, 28, 10);
+    ctx.fillStyle = COLORS.visorCyan;
+    ctx.fillRect(x + 6, drawY + 12, 20, 10);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x + 4, drawY + 4, 24, 6);
+  } else if (tile === 'plasma_abyss') {
+    // Bubbling Plasma Ocean
     const wave = Math.sin((globalFrame + x) * 0.1) * 3;
-    ctx.fillStyle = COLORS.lavaRed;
+    ctx.fillStyle = COLORS.plasmaRed;
     ctx.fillRect(x, drawY + 4 + wave, TILE_SIZE, TILE_SIZE);
-    ctx.fillStyle = COLORS.lavaOrange;
-    ctx.fillRect(x, drawY + wave, TILE_SIZE, 6);
-  } else if (tile === 'bridge') {
-    // Castle bridge made of wooden / chain links
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(x, drawY + 8, TILE_SIZE, 16);
-    ctx.fillStyle = '#D2691E';
-    ctx.fillRect(x + 2, drawY + 10, TILE_SIZE - 4, 12);
-  } else if (tile === 'axe') {
-    // Golden Solana Axe to collapse Bowser's bridge!
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(x + 12, drawY + 14, 8, 16); // handle
+    ctx.fillStyle = COLORS.plasmaOrange;
+    ctx.fillRect(x, drawY + wave, TILE_SIZE, 5);
+  } else if (tile === 'flux_bridge') {
+    // Magnetic Flux Bridge
+    ctx.fillStyle = '#312E81';
+    ctx.fillRect(x, drawY + 10, TILE_SIZE, 12);
+    ctx.fillStyle = COLORS.visorCyan;
+    ctx.fillRect(x + 2, drawY + 12, TILE_SIZE - 4, 8);
+  } else if (tile === 'core_fuse') {
+    // Golden Master Core Switch to drop the boss
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(x + 12, drawY + 14, 8, 16);
     ctx.fillStyle = COLORS.solanaGreen;
     ctx.beginPath();
-    ctx.arc(x + 16, drawY + 12, 10, 0, Math.PI * 2);
+    ctx.arc(x + 16, drawY + 10, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('⚡', x + 16, drawY + 12);
-  } else if (tile === 'flagpole_top') {
-    ctx.fillStyle = '#00A800';
+    ctx.fillText('⚡', x + 16, drawY + 10);
+  } else if (tile === 'uplink_pylon_top') {
+    // Validator Terminal Node Uplink
+    ctx.fillStyle = COLORS.visorCyan;
     ctx.beginPath();
-    ctx.arc(x + 16, drawY + 16, 10, 0, Math.PI * 2);
+    ctx.arc(x + 16, drawY + 16, 11, 0, Math.PI * 2);
     ctx.fill();
-  } else if (tile === 'flagpole_pole') {
     ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x + 14, drawY + 8, 4, 16);
+  } else if (tile === 'uplink_pylon_beam') {
+    ctx.fillStyle = '#06B6D4';
     ctx.fillRect(x + 14, drawY, 4, TILE_SIZE);
-  } else if (tile === 'flagpole_base') {
-    ctx.fillStyle = '#00A800';
-    ctx.fillRect(x + 4, drawY + 16, 24, 16);
-  } else if (tile === 'castle_brick') {
-    ctx.fillStyle = COLORS.castleBrick;
-    ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = '#333333';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, drawY, TILE_SIZE, TILE_SIZE);
-  } else if (tile === 'castle_door') {
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#A5F3FC';
+    ctx.fillRect(x + 15, drawY, 2, TILE_SIZE);
+  } else if (tile === 'uplink_pylon_base') {
+    ctx.fillStyle = '#0E7490';
+    ctx.fillRect(x + 4, drawY + 14, 24, 18);
+    ctx.fillStyle = COLORS.solanaGreen;
+    ctx.fillRect(x + 8, drawY + 18, 16, 4);
+  } else if (tile === 'portal_door') {
+    ctx.fillStyle = '#020617';
     ctx.fillRect(x, drawY, TILE_SIZE, TILE_SIZE);
   }
 }
 
 /**
- * Draws powerup items (Super Mushroom, Fire Flower, Star, 1-Up)
+ * Draws powerup items (Quantum Overcharge, Plasma Core, Hyper Matrix, Reboot Life)
  */
-export function drawPowerUp(ctx: CanvasRenderingContext2D, type: string, x: number, y: number, globalFrame: number) {
-  if (type === 'mushroom' || type === '1up') {
-    // Solana Super Mushroom (Purple/Green cap) or 1-Up (Green cap)
-    const capColor = type === '1up' ? COLORS.solanaGreen : COLORS.solanaPurple;
-    ctx.fillStyle = capColor;
-    ctx.beginPath();
-    ctx.arc(x + 12, y + 10, 10, Math.PI, 0, false);
-    ctx.fill();
+export function drawPowerUp(ctx: CanvasRenderingContext2D, type: string, x: number, y: number, frame: number) {
+  if (type === 'overcharge' || type === 'reboot_life') {
+    // Quantum Battery Cell
+    const cellColor = type === 'reboot_life' ? COLORS.solanaGreen : COLORS.solanaPurple;
+    ctx.fillStyle = '#1E293B';
+    ctx.fillRect(x + 6, y + 4, 14, 18);
 
-    // White polka dots
+    ctx.fillStyle = cellColor;
+    ctx.fillRect(x + 8, y + 8, 10, 12);
+
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(x + 6, y + 6, 3, 3);
-    ctx.fillRect(x + 15, y + 6, 3, 3);
-
-    // Stem
-    ctx.fillStyle = '#FFF8E0';
-    ctx.fillRect(x + 6, y + 10, 12, 10);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 8, y + 12, 2, 4);
-    ctx.fillRect(x + 14, y + 12, 2, 4);
-  } else if (type === 'flower') {
-    // Fire Flower
-    ctx.fillStyle = '#FF4500';
+    ctx.fillRect(x + 10, y + 2, 6, 2); // terminal cap
+  } else if (type === 'plasma_core') {
+    // Arm Blaster Module
+    ctx.fillStyle = '#F97316';
     ctx.beginPath();
-    ctx.arc(x + 12, y + 8, 8, 0, Math.PI * 2);
+    ctx.arc(x + 12, y + 12, 9, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#FFFF00';
+    ctx.fillStyle = '#FEF08A';
     ctx.beginPath();
-    ctx.arc(x + 12, y + 8, 5, 0, Math.PI * 2);
+    ctx.arc(x + 12, y + 12, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#00D800';
-    ctx.fillRect(x + 10, y + 14, 4, 8);
-  } else if (type === 'star') {
-    // Rainbow Starman
-    const starColor = COLORS.starColors[Math.floor(globalFrame / 4) % COLORS.starColors.length];
-    ctx.fillStyle = starColor;
+  } else if (type === 'hyper_matrix') {
+    // Prismatic Star Core
+    const color = COLORS.hyperColors[Math.floor(frame / 4) % COLORS.hyperColors.length];
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x + 12, y + 12, 10, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 9, y + 9, 2, 4);
-    ctx.fillRect(x + 13, y + 9, 2, 4);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x + 10, y + 10, 4, 4);
   }
 }
 
 /**
- * Draws floating rotating $SOL Coin
+ * Draws floating spinning Solana Data Shards
  */
-export function drawCoin(ctx: CanvasRenderingContext2D, x: number, y: number, globalFrame: number) {
-  const widthFactor = Math.abs(Math.cos(globalFrame * 0.12));
+export function drawShard(ctx: CanvasRenderingContext2D, x: number, y: number, frame: number) {
+  const widthFactor = Math.abs(Math.cos(frame * 0.14));
   const w = Math.max(4, 16 * widthFactor);
 
-  ctx.fillStyle = COLORS.coinGold;
+  ctx.fillStyle = COLORS.solanaGreen;
   ctx.beginPath();
   ctx.ellipse(x + 12, y + 12, w / 2, 10, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = COLORS.solanaGreen;
+  ctx.fillStyle = '#064E3B';
   ctx.font = 'bold 9px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   if (w > 8) {
     ctx.fillText('$', x + 12, y + 12);
   }
+}
+
+/**
+ * Draws popping animated shard when hitting a block
+ */
+export function drawPoppingShard(ctx: CanvasRenderingContext2D, shard: PoppingShardEntity, viewportX: number) {
+  const drawX = Math.round(shard.x - viewportX);
+  const drawY = Math.round(shard.y);
+
+  ctx.save();
+  ctx.fillStyle = COLORS.solanaGreen;
+  ctx.beginPath();
+  ctx.arc(drawX + 8, drawY, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 10px monospace';
+  ctx.fillText('$', drawX + 5, drawY + 3);
+  ctx.restore();
 }

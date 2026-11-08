@@ -112,11 +112,11 @@ export async function executeSpeedrunAttestation(
   const tx = new Transaction();
 
   const payload = {
-    app: 'SuperSolario',
+    app: 'CyberNova',
     event: isAiAgent ? 'AI_AGENT_AUTONOMOUS_CLEAR' : 'SPEEDRUN_LEVEL_CLEAR',
     world,
     timeSeconds: Math.round(timeSeconds * 10) / 10,
-    coins,
+    shards: coins,
     score,
     player: playerKeypair.publicKey.toBase58(),
     isAiAgent,
@@ -143,8 +143,8 @@ export async function executeSpeedrunAttestation(
   saveTransactionRecord({
     signature,
     type: isAiAgent ? 'AI_AGENT_ATTESTATION' : 'SPEEDRUN_ATTESTATION',
-    title: `${isAiAgent ? '🤖 Autonomous AI' : '🍄 Player'} Speedrun Clear: World ${world}`,
-    description: `Completed in ${timeSeconds.toFixed(1)}s with ${coins} $COINs and ${score} pts. Cryptographically verified on Devnet!`,
+    title: `${isAiAgent ? '🤖 A.R.I.A. Autonomous AI' : '⚡ Runner Nova'} Speedrun Clear: Sector ${world}`,
+    description: `Completed in ${timeSeconds.toFixed(1)}s with ${coins} $SHARDs and ${score} pts. Cryptographically verified on Devnet!`,
     solscanUrl,
     timestamp: Date.now(),
     status: 'CONFIRMED',

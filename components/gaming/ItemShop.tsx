@@ -6,13 +6,10 @@ import { executeItemMint } from '@/lib/solana/transactions';
 import { getOrCreateBurnerWallet } from '@/lib/solana/burner-wallet';
 import { sounds } from '@/lib/audio/sound-effects';
 import { 
-  ShoppingBag, 
   Sparkles, 
   Zap, 
-  Coins, 
   Check, 
-  ExternalLink,
-  QrCode
+  ExternalLink 
 } from 'lucide-react';
 
 interface ItemShopProps {
@@ -27,55 +24,55 @@ interface ItemShopProps {
 const SHOP_ITEMS: InventoryItem[] = [
   {
     id: 'skin-classic',
-    name: 'Classic Solario',
+    name: 'Cyber Nova (Default)',
     category: 'SKIN',
     rarity: 'COMMON',
-    description: 'The iconic red hat and blue overalls plumber from the genesis block.',
+    description: 'The standard aerodynamic cyber-runner chassis with neon cyan visor and mag-thrusters.',
     priceSol: 0,
     priceCoins: 0,
   },
   {
     id: 'skin-fire',
-    name: 'Fire Solario',
+    name: 'Plasma Ember Nova',
     category: 'SKIN',
     rarity: 'RARE',
-    description: 'Starts levels equipped with White/Red Fire Flower gear. Casts bouncing fireballs!',
+    description: 'Equipped with dual arm-mounted plasma cannons that fire bouncing energy pulses with [X].',
     priceSol: 0.05,
     priceCoins: 50,
   },
   {
     id: 'skin-gold',
-    name: 'Cyber Gold Solario',
+    name: '24K Validator Nova',
     category: 'SKIN',
     rarity: 'LEGENDARY',
-    description: 'Forged in Solana validator fires. Shimmers with pure 24-karat gold radiance.',
+    description: 'Forged from pure solar validator cores. Radiates an unyielding golden aura.',
     priceSol: 0.1,
     priceCoins: 100,
   },
   {
     id: 'skin-shadow',
-    name: 'Shadow Solario',
+    name: 'Shadow Matrix Nova',
     category: 'SKIN',
     rarity: 'LEGENDARY',
-    description: 'Dark mode cyber ninja skin with neon Solana green accents.',
+    description: 'Dark mode stealth runner with emerald circuit highlights.',
     priceSol: 0.1,
     priceCoins: 100,
   },
   {
     id: 'item-star',
-    name: 'Starman Shield',
+    name: 'Hyper-Matrix Prismatic Star',
     category: 'POWERUP',
     rarity: 'RARE',
-    description: 'Start with 10 seconds of invincibility. Destroys any enemy on contact!',
+    description: '10 seconds of invulnerability. Pulverizes any enemy droid on collision!',
     priceSol: 0.02,
     priceCoins: 30,
   },
   {
     id: 'item-1up',
-    name: '1-Up Solana Shroom',
+    name: 'Reboot Life Matrix',
     category: 'POWERUP',
     rarity: 'COMMON',
-    description: 'Instantly grants +1 extra life to rescue Princess Peach.',
+    description: 'Instantly grants +1 extra shield life to survive the mempool.',
     priceSol: 0.01,
     priceCoins: 20,
   },
@@ -92,7 +89,6 @@ export default function ItemShop({
   const [purchasedIds, setPurchasedIds] = useState<string[]>(['skin-classic']);
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
-  const [showQrItem, setShowQrItem] = useState<InventoryItem | null>(null);
 
   const handleBuyWithSol = async (item: InventoryItem) => {
     if (item.priceSol > solBalance || isPurchasing) return;
@@ -142,28 +138,27 @@ export default function ItemShop({
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-zinc-800 mb-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-amber-400 p-0.5 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-400 p-0.5 flex items-center justify-center">
             <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center text-lg">
-              🛍️
+              ⚡
             </div>
           </div>
           <div>
             <h3 className="text-base font-black text-white tracking-wide">
-              TOAD&apos;S NFT <span className="text-purple-400">POWER-UP STORE</span>
+              CYBER TERMINAL <span className="text-cyan-400">ITEM & SKIN VAULT</span>
             </h3>
             <p className="text-[11px] text-zinc-400">
-              Player-Owned Assets • Buy with $COIN or Solana Pay
+              Player-Owned On-Chain Assets • Purchase with $SHARD or Mint with SOL
             </p>
           </div>
         </div>
 
-        {/* User Balance Display */}
         <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg text-amber-300">
-            <Coins className="w-3.5 h-3.5" />
-            <span>{inGameCoins} $COIN</span>
+          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg text-emerald-300">
+            <Zap className="w-3.5 h-3.5" />
+            <span>{inGameCoins} $SHARD</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg text-emerald-400">
+          <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-3 py-1.5 rounded-lg text-cyan-400">
             <Zap className="w-3.5 h-3.5" />
             <span>{solBalance.toFixed(3)} SOL</span>
           </div>
@@ -177,14 +172,14 @@ export default function ItemShop({
           const isEquipped = item.id === `skin-${activeSkin}`;
           const rarityColor = 
             item.rarity === 'LEGENDARY' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' :
-            item.rarity === 'RARE' ? 'text-purple-400 border-purple-500/30 bg-purple-500/10' :
+            item.rarity === 'RARE' ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10' :
             'text-zinc-400 border-zinc-700 bg-zinc-800';
 
           return (
             <div
               key={item.id}
               className={`bg-zinc-950 border rounded-xl p-4 flex flex-col justify-between transition ${
-                isEquipped ? 'border-emerald-500 shadow-md shadow-emerald-500/10' : 'border-zinc-800'
+                isEquipped ? 'border-cyan-500 shadow-md shadow-cyan-500/10' : 'border-zinc-800'
               }`}
             >
               <div>
@@ -193,62 +188,60 @@ export default function ItemShop({
                     {item.rarity}
                   </span>
                   {item.category === 'SKIN' && (
-                    <span className="text-[10px] text-zinc-500 uppercase">Cosmetic Skin</span>
+                    <span className="text-[10px] text-zinc-500 uppercase">Chassis Skin</span>
                   )}
                 </div>
 
                 <h4 className="text-sm font-bold text-white mb-1 flex items-center justify-between">
                   <span>{item.name}</span>
-                  {isEquipped && <Check className="w-4 h-4 text-emerald-400" />}
+                  {isEquipped && <Check className="w-4 h-4 text-cyan-400" />}
                 </h4>
                 <p className="text-[11px] text-zinc-400 leading-relaxed mb-4">
                   {item.description}
                 </p>
               </div>
 
-              {/* Price & Action */}
               <div className="border-t border-zinc-800/80 pt-3">
                 <div className="flex items-center justify-between text-xs mb-2.5">
                   <span className="text-zinc-500">Price:</span>
                   <div className="flex items-center gap-2">
                     {item.priceCoins > 0 && (
-                      <span className="text-amber-400 font-bold">{item.priceCoins} $COIN</span>
+                      <span className="text-emerald-400 font-bold">{item.priceCoins} $SHARD</span>
                     )}
                     {item.priceSol > 0 && (
-                      <span className="text-emerald-400 font-bold">{item.priceSol} SOL</span>
+                      <span className="text-cyan-400 font-bold">{item.priceSol} SOL</span>
                     )}
                     {item.priceCoins === 0 && item.priceSol === 0 && (
-                      <span className="text-zinc-400 font-bold">Free</span>
+                      <span className="text-zinc-400 font-bold">Default</span>
                     )}
                   </div>
                 </div>
 
-                {/* Buttons */}
                 {isOwned ? (
                   <button
                     onClick={() => handleEquip(item)}
                     disabled={isEquipped}
                     className={`w-full py-2 rounded-lg text-xs font-bold transition ${
                       isEquipped
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 cursor-default'
                         : 'bg-zinc-800 hover:bg-zinc-700 text-white'
                     }`}
                   >
-                    {isEquipped ? '✓ Equipped' : 'Equip Skin'}
+                    {isEquipped ? '✓ Equipped' : 'Equip Chassis'}
                   </button>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleBuyWithCoins(item)}
                       disabled={inGameCoins < item.priceCoins}
-                      className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold py-2 rounded-lg text-xs transition disabled:opacity-40"
+                      className="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold py-2 rounded-lg text-xs transition disabled:opacity-40"
                     >
-                      Buy $COIN
+                      Buy $SHARD
                     </button>
                     <button
                       onClick={() => handleBuyWithSol(item)}
                       disabled={isPurchasing === item.id || solBalance < item.priceSol}
-                      className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-2 rounded-lg text-xs transition disabled:opacity-40 flex items-center justify-center gap-1"
+                      className="bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-black py-2 rounded-lg text-xs transition disabled:opacity-40 flex items-center justify-center gap-1"
                     >
                       <Zap className="w-3 h-3" />
                       <span>{isPurchasing === item.id ? 'Minting...' : 'Mint SOL'}</span>
@@ -261,9 +254,8 @@ export default function ItemShop({
         })}
       </div>
 
-      {/* Confirmed Signature Link */}
       {lastSignature && (
-        <div className="mt-4 p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-xs text-emerald-300">
+        <div className="mt-4 p-3 bg-cyan-950/40 border border-cyan-500/40 rounded-xl text-xs text-cyan-300">
           <div className="font-bold flex items-center gap-1 mb-1">
             <span>✓ Asset Minted to Wallet on Solana Devnet</span>
           </div>

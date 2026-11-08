@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Super Solario | On-Chain Mario Platformer, Autonomous AI & DeFi on Solana",
-  description: "A full working 60fps retro Mario-style 2D platformer powered natively by Solana Devnet. Features autonomous AI speedrun copilot, in-game Constant-Product AMM DEX ($COIN <-> $SOL), Yoshi staking farm, speedrun wager escrows, and 1-click burner wallet onboarding.",
+  title: "CYBER NOVA | On-Chain Cyber-Platformer, Autonomous AI & DeFi on Solana",
+  description: "A full working 60fps retro cyber-runner platformer powered natively by Solana Devnet. Features autonomous AI speedrun copilot (A.R.I.A.), in-game Constant-Product AMM DEX ($SHARD <-> $SOL), Solar Staking Reactor, speedrun wager escrows, and 1-click burner wallet onboarding.",
 };
 
 export default function RootLayout({

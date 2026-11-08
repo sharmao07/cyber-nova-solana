@@ -84,16 +84,16 @@ export default function WagerEscrow({
       <div className="mt-4 bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl text-xs space-y-2 text-zinc-300">
         <div className="flex items-center gap-2 text-amber-400 font-bold">
           <Timer className="w-4 h-4" />
-          <span>Rules: Clear World {selectedWorld} in under {targetTime}s</span>
+          <span>Rules: Clear Sector {selectedWorld} in under {targetTime}s</span>
         </div>
         <p className="text-zinc-400 text-[11px]">
-          Lock SOL into the decentralized escrow. If you reach the flagpole / golden axe before the timer expires without dying, the escrow automatically disburses your original wager + 50% bounty bonus!
+          Lock SOL into the decentralized escrow. If you reach the terminal pylon / core fuse before the timer expires without losing your shields, the escrow automatically disburses your original wager + 50% bounty bonus!
         </p>
       </div>
 
-      {/* Select World */}
+      {/* Select Sector */}
       <div className="mt-4">
-        <div className="text-xs text-zinc-400 mb-2">Select Target World</div>
+        <div className="text-xs text-zinc-400 mb-2">Select Target Sector</div>
         <div className="grid grid-cols-3 gap-2">
           {['1-1', '1-2', '1-4'].map(w => (
             <button
@@ -105,7 +105,7 @@ export default function WagerEscrow({
                   : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
               }`}
             >
-              World {w}
+              Sector {w}
             </button>
           ))}
         </div>

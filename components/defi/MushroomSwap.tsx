@@ -3,14 +3,10 @@
 import React, { useState } from 'react';
 import { executeAmmSwap } from '@/lib/solana/transactions';
 import { getOrCreateBurnerWallet } from '@/lib/solana/burner-wallet';
-import { getAccountBalance } from '@/lib/solana/connection';
 import { sounds } from '@/lib/audio/sound-effects';
 import { 
   ArrowDownUp, 
-  Coins, 
   Zap, 
-  TrendingUp, 
-  Info, 
   ExternalLink,
   ShieldAlert
 } from 'lucide-react';
@@ -29,36 +25,27 @@ export default function MushroomSwap({
   onTxConfirmed,
 }: MushroomSwapProps) {
   // AMM Constant Product Reserves: x * y = k
-  // Sol Reserve: 20.0 SOL, Coin Reserve: 100,000 $COIN => k = 2,000,000
+  // Sol Reserve: 20.0 SOL, Shard Reserve: 100,000 $SHARD => k = 2,000,000
   const [solReserve, setSolReserve] = useState<number>(20.0);
-  const [coinReserve, setCoinReserve] = useState<number>(100000);
-  const [mode, setMode] = useState<'SELL_COINS' | 'BUY_COINS'>('SELL_COINS');
+  const [shardReserve, setShardReserve] = useState<number>(100000);
+  const [mode, setMode] = useState<'SELL_SHARDS' | 'BUY_SHARDS'>('SELL_SHARDS');
   const [amount, setAmount] = useState<string>('50');
-  const [slippage, setSlippage] = useState<number>(0.5);
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Spot price: 1 SOL = (coinReserve / solReserve) $COIN
-  const spotCoinPerSol = coinReserve / solReserve; // e.g. 5,000 $COIN / SOL
-  const spotSolPerCoin = solReserve / coinReserve; // e.g. 0.0002 SOL / $COIN
-
-  // Constant Product Out Calculation
+  const spotShardPerSol = shardReserve / solReserve; // e.g. 5,000 $SHARD / SOL
   const numAmount = parseFloat(amount) || 0;
   let estimatedOut = 0;
   let priceImpact = 0;
 
-  if (mode === 'SELL_COINS') {
-    // Player sells Delta_x ($COIN) to receive Delta_y (SOL)
-    // (x + dx) * (y - dy) = k  =>  dy = y - k / (x + dx) = (y * dx) / (x + dx)
-    // Less 0.3% LP fee
-    const effectiveIn = numAmount * 0.997;
-    estimatedOut = (solReserve * effectiveIn) / (coinReserve + effectiveIn);
-    priceImpact = (numAmount / (coinReserve + numAmount)) * 100;
+  if (mode === 'SELL_SHARDS') {
+    const effectiveIn = numAmount * 0.997; // 0.3% LP fee
+    estimatedOut = (solReserve * effectiveIn) / (shardReserve + effectiveIn);
+    priceImpact = (numAmount / (shardReserve + numAmount)) * 100;
   } else {
-    // Player pays Delta_y (SOL) to receive Delta_x ($COIN)
     const effectiveIn = numAmount * 0.997;
-    estimatedOut = (coinReserve * effectiveIn) / (solReserve + effectiveIn);
+    estimatedOut = (shardReserve * effectiveIn) / (solReserve + effectiveIn);
     priceImpact = (numAmount / (solReserve + numAmount)) * 100;
   }
 
@@ -66,12 +53,11 @@ export default function MushroomSwap({
     if (numAmount <= 0 || isSwapping) return;
     setErrorMsg(null);
 
-    // Validation
-    if (mode === 'SELL_COINS' && numAmount > inGameCoins) {
-      setErrorMsg(`Insufficient $COIN balance (You have ${inGameCoins} $COINs)`);
+    if (mode === 'SELL_SHARDS' && numAmount > inGameCoins) {
+      setErrorMsg(`Insufficient $SHARD balance (You have ${inGameCoins} $SHARDs)`);
       return;
     }
-    if (mode === 'BUY_COINS' && numAmount > solBalance) {
+    if (mode === 'BUY_SHARDS' && numAmount > solBalance) {
       setErrorMsg(`Insufficient Devnet SOL balance (You have ${solBalance.toFixed(3)} SOL)`);
       return;
     }
@@ -81,28 +67,27 @@ export default function MushroomSwap({
 
     try {
       const wallet = getOrCreateBurnerWallet();
-      const tradeType = mode === 'BUY_COINS' ? 'BUY_COIN' : 'SELL_COIN';
-      const solValue = mode === 'BUY_COINS' ? numAmount : estimatedOut;
-      const coinValue = mode === 'BUY_COINS' ? estimatedOut : numAmount;
+      const tradeType = mode === 'BUY_SHARDS' ? 'BUY_COIN' : 'SELL_COIN';
+      const solValue = mode === 'BUY_SHARDS' ? numAmount : estimatedOut;
+      const shardValue = mode === 'BUY_SHARDS' ? estimatedOut : numAmount;
 
       const sig = await executeAmmSwap(
         wallet.keypair,
         tradeType,
         solValue,
-        coinValue
+        shardValue
       );
 
       setLastSignature(sig);
       if (onTxConfirmed) onTxConfirmed(sig);
 
-      // Update pool reserves
-      if (mode === 'SELL_COINS') {
-        setCoinReserve(c => c + numAmount);
+      if (mode === 'SELL_SHARDS') {
+        setShardReserve(c => c + numAmount);
         setSolReserve(s => Math.max(0.1, s - estimatedOut));
         onSwapSuccess(inGameCoins - numAmount, solBalance + estimatedOut);
       } else {
         setSolReserve(s => s + numAmount);
-        setCoinReserve(c => Math.max(100, c - estimatedOut));
+        setShardReserve(c => Math.max(100, c - estimatedOut));
         onSwapSuccess(inGameCoins + Math.round(estimatedOut), solBalance - numAmount);
       }
 
@@ -120,14 +105,14 @@ export default function MushroomSwap({
       {/* Header */}
       <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-emerald-400 p-0.5 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-400 p-0.5 flex items-center justify-center">
             <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center text-lg">
-              🍄
+              ⚡
             </div>
           </div>
           <div>
             <h3 className="text-base font-black text-white tracking-wide">
-              MUSHROOM SWAP <span className="text-emerald-400">DEX</span>
+              QUANTUM SWAP <span className="text-emerald-400">DEX</span>
             </h3>
             <p className="text-[11px] text-zinc-400">
               Constant-Product AMM (x * y = k) • 0.3% LP Fee
@@ -137,7 +122,7 @@ export default function MushroomSwap({
         <div className="text-right">
           <div className="text-[10px] text-zinc-500 uppercase">Rate</div>
           <div className="text-xs font-bold text-emerald-400">
-            1 SOL = {Math.round(spotCoinPerSol).toLocaleString()} $COIN
+            1 SOL = {Math.round(spotShardPerSol).toLocaleString()} $SHARD
           </div>
         </div>
       </div>
@@ -149,7 +134,7 @@ export default function MushroomSwap({
           <span>
             Balance:{' '}
             <strong className="text-white">
-              {mode === 'SELL_COINS' ? `${inGameCoins} $COIN` : `${solBalance.toFixed(3)} SOL`}
+              {mode === 'SELL_SHARDS' ? `${inGameCoins} $SHARD` : `${solBalance.toFixed(3)} SOL`}
             </strong>
           </span>
         </div>
@@ -163,14 +148,14 @@ export default function MushroomSwap({
             min="0"
           />
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-bold text-white flex-shrink-0">
-            {mode === 'SELL_COINS' ? (
+            {mode === 'SELL_SHARDS' ? (
               <>
-                <Coins className="w-4 h-4 text-amber-400" />
-                <span>$COIN</span>
+                <Zap className="w-4 h-4 text-emerald-400" />
+                <span>$SHARD</span>
               </>
             ) : (
               <>
-                <Zap className="w-4 h-4 text-emerald-400" />
+                <Zap className="w-4 h-4 text-cyan-400" />
                 <span>SOL</span>
               </>
             )}
@@ -182,7 +167,7 @@ export default function MushroomSwap({
       <div className="flex justify-center -my-2.5 relative z-10">
         <button
           onClick={() => {
-            setMode(m => (m === 'SELL_COINS' ? 'BUY_COINS' : 'SELL_COINS'));
+            setMode(m => (m === 'SELL_SHARDS' ? 'BUY_SHARDS' : 'SELL_SHARDS'));
             setAmount('10');
             sounds.playJump(false);
           }}
@@ -199,24 +184,24 @@ export default function MushroomSwap({
           <span>
             Balance:{' '}
             <strong className="text-white">
-              {mode === 'SELL_COINS' ? `${solBalance.toFixed(3)} SOL` : `${inGameCoins} $COIN`}
+              {mode === 'SELL_SHARDS' ? `${solBalance.toFixed(3)} SOL` : `${inGameCoins} $SHARD`}
             </strong>
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
           <div className="text-2xl font-black text-emerald-400">
-            {mode === 'SELL_COINS' ? estimatedOut.toFixed(4) : Math.round(estimatedOut)}
+            {mode === 'SELL_SHARDS' ? estimatedOut.toFixed(4) : Math.round(estimatedOut)}
           </div>
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-bold text-white flex-shrink-0">
-            {mode === 'SELL_COINS' ? (
+            {mode === 'SELL_SHARDS' ? (
               <>
-                <Zap className="w-4 h-4 text-emerald-400" />
+                <Zap className="w-4 h-4 text-cyan-400" />
                 <span>SOL</span>
               </>
             ) : (
               <>
-                <Coins className="w-4 h-4 text-amber-400" />
-                <span>$COIN</span>
+                <Zap className="w-4 h-4 text-emerald-400" />
+                <span>$SHARD</span>
               </>
             )}
           </div>
@@ -234,18 +219,17 @@ export default function MushroomSwap({
         <div className="flex justify-between">
           <span>Liquidity Provider Fee (0.3%)</span>
           <span className="text-zinc-300">
-            {mode === 'SELL_COINS' ? `${(numAmount * 0.003).toFixed(2)} $COIN` : `${(numAmount * 0.003).toFixed(4)} SOL`}
+            {mode === 'SELL_SHARDS' ? `${(numAmount * 0.003).toFixed(2)} $SHARD` : `${(numAmount * 0.003).toFixed(4)} SOL`}
           </span>
         </div>
         <div className="flex justify-between">
           <span>Pool Reserves</span>
           <span className="text-zinc-300">
-            {solReserve.toFixed(2)} SOL / {coinReserve.toLocaleString()} $COIN
+            {solReserve.toFixed(2)} SOL / {shardReserve.toLocaleString()} $SHARD
           </span>
         </div>
       </div>
 
-      {/* Error Message */}
       {errorMsg && (
         <div className="mt-3 p-2.5 bg-red-950/40 border border-red-500/40 rounded-xl text-xs text-red-300 flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -253,7 +237,6 @@ export default function MushroomSwap({
         </div>
       )}
 
-      {/* Action Button */}
       <button
         onClick={handleSwap}
         disabled={isSwapping || numAmount <= 0}
@@ -263,13 +246,12 @@ export default function MushroomSwap({
         <span>
           {isSwapping 
             ? 'Executing Swap on Solana...' 
-            : mode === 'SELL_COINS' 
-              ? `Swap $COIN for ${estimatedOut.toFixed(4)} SOL` 
-              : `Swap SOL for ${Math.round(estimatedOut)} $COIN`}
+            : mode === 'SELL_SHARDS' 
+              ? `Swap $SHARD for ${estimatedOut.toFixed(4)} SOL` 
+              : `Swap SOL for ${Math.round(estimatedOut)} $SHARD`}
         </span>
       </button>
 
-      {/* Confirmed Signature Link */}
       {lastSignature && (
         <div className="mt-3 p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-xs text-emerald-300">
           <div className="font-bold flex items-center gap-1 mb-1">
