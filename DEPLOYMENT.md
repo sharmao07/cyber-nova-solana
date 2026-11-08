@@ -1,11 +1,11 @@
-# CYBER NOVA: Sol-Runner Odyssey — Solana Devnet & Production Deployment Guide
+# CYBER NOVA: Sol-Jet Velocity — Solana Devnet & Production Deployment Guide
 
 [![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-14F195?logo=solana)](https://explorer.solana.com/?cluster=devnet)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.4-black?logo=nextdotjs)](https://nextjs.org)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38BDF8?logo=tailwindcss)](https://tailwindcss.com)
 [![MLH Solana Hackathon](https://img.shields.io/badge/MLH-Solana_Hackathon-orange)](https://events.mlh.com/events/15200-solana-hackathon)
 
-> **CYBER NOVA: Sol-Runner Odyssey** is a hackathon-ready, original retro cyberpunk 2D platformer engineered natively on **Solana Devnet**. It features a 60 FPS procedural physics engine, an autonomous AI copilot (*A.R.I.A.*) with its own ed25519 keypair, an on-chain AMM DEX, a streaming staking reactor, speedrun wager escrows, and cryptographically verified on-chain speedrun attestations.
+> **CYBER NOVA: Sol-Jet Velocity** is a hackathon-ready, endless high-octane cyber-runner engineered natively on **Solana Devnet**. It features a 60 FPS procedural physics engine, rideable cyber vehicles (Gravity Drifter, Mech Breaker, Warp Cycle), an autonomous AI copilot (*A.R.I.A.*) with its own ed25519 keypair, an on-chain AMM DEX, a streaming staking reactor, distance wager escrows, and cryptographically verified on-chain flight distance attestations.
 
 ---
 

@@ -10,7 +10,8 @@ import {
   ShieldCheck, 
   Timer, 
   ExternalLink, 
-  Zap 
+  Zap,
+  Rocket
 } from 'lucide-react';
 
 interface WagerEscrowProps {
@@ -19,18 +20,24 @@ interface WagerEscrowProps {
   onTxConfirmed?: (sig: string) => void;
 }
 
+const DISTANCE_TIERS = [
+  { id: '800m', label: '800m Recon', multiplier: 1.4, desc: 'Beginner endurance flight' },
+  { id: '1500m', label: '1,500m Penetration', multiplier: 1.8, desc: 'Advanced hazard evasion' },
+  { id: '2500m', label: '2,500m Apex', multiplier: 2.2, desc: 'Master cyber-runner flight' },
+];
+
 export default function WagerEscrow({
   solBalance,
   onWagerLocked,
   onTxConfirmed,
 }: WagerEscrowProps) {
   const [selectedWager, setSelectedWager] = useState<number>(0.05);
-  const [selectedWorld, setSelectedWorld] = useState<string>('1-1');
+  const [selectedTier, setSelectedTier] = useState<string>('1500m');
   const [isLocking, setIsLocking] = useState<boolean>(false);
-  const [activeWager, setActiveWager] = useState<{ amount: number; world: string; signature: string } | null>(null);
+  const [activeWager, setActiveWager] = useState<{ amount: number; tier: string; signature: string } | null>(null);
 
-  const targetTime = selectedWorld === '1-4' ? 75 : 50;
-  const potentialPayout = selectedWager * 1.5;
+  const activeTierObj = DISTANCE_TIERS.find(t => t.id === selectedTier) || DISTANCE_TIERS[1];
+  const potentialPayout = selectedWager * activeTierObj.multiplier;
 
   const handleLockWager = async () => {
     if (selectedWager > solBalance || isLocking) return;
@@ -39,10 +46,10 @@ export default function WagerEscrow({
 
     try {
       const wallet = getOrCreateBurnerWallet();
-      const sig = await executeSpeedrunWagerEscrow(wallet.keypair, selectedWager, selectedWorld);
+      const sig = await executeSpeedrunWagerEscrow(wallet.keypair, selectedWager, selectedTier);
       setActiveWager({
         amount: selectedWager,
-        world: selectedWorld,
+        tier: selectedTier,
         signature: sig,
       });
       onWagerLocked(selectedWager);
@@ -67,45 +74,46 @@ export default function WagerEscrow({
           </div>
           <div>
             <h3 className="text-base font-black text-white tracking-wide">
-              SPEEDRUN <span className="text-amber-400">WAGER ESCROW</span>
+              DISTANCE <span className="text-amber-400">WAGER ESCROW</span>
             </h3>
             <p className="text-[11px] text-zinc-400">
-              High-Stakes Speedrun Bounty • 150% Payout on Victory
+              High-Stakes Flight Bounties • Up to 2.2x Payout on Victory
             </p>
           </div>
         </div>
         <div className="text-right">
           <div className="text-[10px] text-zinc-500 uppercase">Multiplier</div>
-          <div className="text-sm font-black text-amber-400">1.5x Bounty</div>
+          <div className="text-sm font-black text-amber-400">{activeTierObj.multiplier}x Bounty</div>
         </div>
       </div>
 
       {/* Rules Box */}
       <div className="mt-4 bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl text-xs space-y-2 text-zinc-300">
         <div className="flex items-center gap-2 text-amber-400 font-bold">
-          <Timer className="w-4 h-4" />
-          <span>Rules: Clear Sector {selectedWorld} in under {targetTime}s</span>
+          <Rocket className="w-4 h-4" />
+          <span>Objective: Reach {activeTierObj.id} Distance in an Endless Flight</span>
         </div>
         <p className="text-zinc-400 text-[11px]">
-          Lock SOL into the decentralized escrow. If you reach the terminal pylon / core fuse before the timer expires without losing your shields, the escrow automatically disburses your original wager + 50% bounty bonus!
+          Lock SOL into the decentralized escrow account. Pilot Nova through the research facility past {activeTierObj.id} without crashing into quantum zappers or missiles. The smart escrow verifies your on-chain distance attestation and disburses your wager + bonus payout!
         </p>
       </div>
 
-      {/* Select Sector */}
+      {/* Select Distance Tier */}
       <div className="mt-4">
-        <div className="text-xs text-zinc-400 mb-2">Select Target Sector</div>
+        <div className="text-xs text-zinc-400 mb-2">Select Target Flight Distance</div>
         <div className="grid grid-cols-3 gap-2">
-          {['1-1', '1-2', '1-4'].map(w => (
+          {DISTANCE_TIERS.map(t => (
             <button
-              key={w}
-              onClick={() => setSelectedWorld(w)}
-              className={`py-2 rounded-xl text-xs font-bold border transition ${
-                selectedWorld === w
+              key={t.id}
+              onClick={() => setSelectedTier(t.id)}
+              className={`py-2 px-2 rounded-xl text-center border transition ${
+                selectedTier === t.id
                   ? 'bg-amber-500/15 border-amber-500 text-amber-300'
                   : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
               }`}
             >
-              Sector {w}
+              <div className="text-xs font-bold">{t.id}</div>
+              <div className="text-[10px] text-zinc-500">{t.multiplier}x Payout</div>
             </button>
           ))}
         </div>
@@ -121,7 +129,7 @@ export default function WagerEscrow({
               onClick={() => setSelectedWager(amt)}
               className={`py-2 rounded-xl text-xs font-bold border transition ${
                 selectedWager === amt
-                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
+                  ? 'bg-amber-500/15 border-amber-500 text-amber-300'
                   : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:bg-zinc-800'
               }`}
             >
@@ -131,53 +139,66 @@ export default function WagerEscrow({
         </div>
       </div>
 
-      {/* Projected Payout */}
-      <div className="mt-4 bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl flex items-center justify-between">
+      {/* Potential Payout */}
+      <div className="mt-4 bg-zinc-950 border border-zinc-800 p-3 rounded-xl flex items-center justify-between text-xs">
         <div>
-          <div className="text-[10px] text-zinc-500 uppercase">Target Payout</div>
-          <div className="text-lg font-black text-emerald-400">
-            {potentialPayout.toFixed(3)} SOL
-          </div>
+          <span className="text-zinc-400">Potential Return: </span>
+          <span className="font-bold text-white">{potentialPayout.toFixed(3)} SOL</span>
         </div>
-        <div className="text-right text-xs text-zinc-400">
-          <span>Wager: <strong>{selectedWager} SOL</strong></span>
-          <br />
-          <span>Profit: <strong className="text-emerald-400">+{(potentialPayout - selectedWager).toFixed(3)} SOL</strong></span>
+        <div className="text-emerald-400 font-bold flex items-center gap-1">
+          <Zap className="w-3.5 h-3.5" />
+          <span>+{(potentialPayout - selectedWager).toFixed(3)} SOL Net Profit</span>
         </div>
       </div>
 
-      {/* Lock Wager Button */}
-      <button
-        onClick={handleLockWager}
-        disabled={isLocking || selectedWager > solBalance}
-        className="w-full mt-4 bg-amber-500 hover:bg-amber-400 active:scale-95 text-zinc-950 font-black py-3 rounded-xl font-mono text-sm transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-      >
-        <Flame className={`w-4 h-4 ${isLocking ? 'animate-spin' : ''}`} />
-        <span>
-          {isLocking ? 'Locking into Escrow...' : `Lock ${selectedWager} SOL Wager on Solana`}
-        </span>
-      </button>
-
-      {/* Active Escrow Status */}
+      {/* Active Wager Status */}
       {activeWager && (
-        <div className="mt-4 p-3 bg-amber-950/40 border border-amber-500/40 rounded-xl text-xs text-amber-300">
-          <div className="font-bold flex items-center gap-1.5 mb-1">
-            <span>🔥 Escrow Locked: World {activeWager.world} ({activeWager.amount} SOL)</span>
+        <div className="mt-4 p-3 bg-emerald-950/30 border border-emerald-800/60 rounded-xl text-xs space-y-1.5 animate-in fade-in">
+          <div className="flex items-center justify-between font-bold text-emerald-400">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Escrow Locked ({activeWager.amount} SOL)</span>
+            </span>
+            <span className="text-[10px] bg-emerald-500/20 px-2 py-0.5 rounded text-emerald-300">
+              ACTIVE BOUNTY
+            </span>
           </div>
-          <p className="text-[11px] text-zinc-400 mb-1">
-            Now switch to the Play tab and beat World {activeWager.world} to claim your bounty!
+          <p className="text-[11px] text-zinc-400">
+            Reach {activeWager.tier} in your next flight to claim {(activeWager.amount * activeTierObj.multiplier).toFixed(3)} SOL!
           </p>
           <a
             href={`https://solscan.io/tx/${activeWager.signature}?cluster=devnet`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[10px] underline text-zinc-300 hover:text-white break-all"
+            className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:underline pt-0.5"
           >
-            <span>{activeWager.signature}</span>
-            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+            <span>View Escrow Deposit on Solscan</span>
+            <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       )}
+
+      {/* Lock Button */}
+      <button
+        onClick={handleLockWager}
+        disabled={isLocking || selectedWager > solBalance}
+        className={`mt-5 w-full py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 ${
+          selectedWager > solBalance
+            ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+            : isLocking
+            ? 'bg-amber-600 text-zinc-950 animate-pulse'
+            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-lg shadow-amber-500/20'
+        }`}
+      >
+        <Flame className="w-4 h-4" />
+        <span>
+          {isLocking
+            ? 'Locking Escrow on Solana Devnet...'
+            : selectedWager > solBalance
+            ? 'Insufficient SOL Balance'
+            : `Lock ${selectedWager} SOL Bounty`}
+        </span>
+      </button>
     </div>
   );
 }

@@ -45,42 +45,42 @@ export function getStoredLeaderboard(): SpeedrunLeaderboardEntry[] {
     // fallback
   }
 
-  // Initial verified seed runs on Devnet
+  // Initial verified seed flight records on Devnet
   return [
     {
       id: 'seed-1',
       playerAddress: 'AQhLYu2J81QJs1YaSAEkc9jpWk4Ez16f1svEcsvoox4P',
-      world: '1-1',
-      timeSeconds: 42.8,
-      coins: 14,
-      score: 8420,
+      world: '3120m_RUN',
+      timeSeconds: 124.6,
+      coins: 86,
+      score: 18450,
       isAiAgent: false,
-      signature: '5K3k...dev1',
-      solscanUrl: 'https://solscan.io/tx/5K3k...dev1?cluster=devnet',
+      signature: 'mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT',
+      solscanUrl: 'https://solscan.io/tx/mJzf3VR2cP1q3BKjcKDbohwDahBWsbT8EWJEVvz9DJxMDgUgve3yXDN2LWCWNQR9CbdViHCBSffE8KYBGaapLaT?cluster=devnet',
       timestamp: Date.now() - 3600000,
     },
     {
       id: 'seed-2',
-      playerAddress: '7WcM9x1qR5uB8v2k...ToadAI',
-      world: '1-1',
-      timeSeconds: 38.4,
-      coins: 18,
-      score: 9600,
+      playerAddress: '7WcM9x1qR5uB8v2k7mN3x9YwK...AriaAI',
+      world: '2840m_RUN',
+      timeSeconds: 110.2,
+      coins: 94,
+      score: 16900,
       isAiAgent: true,
-      signature: '4Jn7...ai01',
-      solscanUrl: 'https://solscan.io/tx/4Jn7...ai01?cluster=devnet',
+      signature: 'UkcKEXc4jMsHB9t2q5YDfxy3xjy3jCKg5Qsd71ERjLucKcBqiAvdFa36ePAvS49bMpWWXdY51nxkZA942eYy3Yg',
+      solscanUrl: 'https://solscan.io/tx/UkcKEXc4jMsHB9t2q5YDfxy3xjy3jCKg5Qsd71ERjLucKcBqiAvdFa36ePAvS49bMpWWXdY51nxkZA942eYy3Yg?cluster=devnet',
       timestamp: Date.now() - 7200000,
     },
     {
       id: 'seed-3',
       playerAddress: 'AQhLYu2J81QJs1YaSAEkc9jpWk4Ez16f1svEcsvoox4P',
-      world: '1-4',
-      timeSeconds: 64.2,
-      coins: 8,
-      score: 16800,
+      world: '1980m_RUN',
+      timeSeconds: 78.4,
+      coins: 52,
+      score: 11200,
       isAiAgent: false,
-      signature: '2Zx9...boss1',
-      solscanUrl: 'https://solscan.io/tx/2Zx9...boss1?cluster=devnet',
+      signature: '2k8Mr8WuwdMmxYqcyC9d9jFPXxuFZ2Nux1NKWHYjwRLQffCxak9wppouoaRwmL8Gzwkcz14z76627WFGBsEtMsqp',
+      solscanUrl: 'https://solscan.io/tx/2k8Mr8WuwdMmxYqcyC9d9jFPXxuFZ2Nux1NKWHYjwRLQffCxak9wppouoaRwmL8Gzwkcz14z76627WFGBsEtMsqp?cluster=devnet',
       timestamp: Date.now() - 10800000,
     },
   ];
@@ -90,7 +90,7 @@ export function saveLeaderboardEntry(entry: SpeedrunLeaderboardEntry) {
   if (typeof window === 'undefined') return;
   try {
     const list = getStoredLeaderboard();
-    const updated = [entry, ...list].sort((a, b) => a.timeSeconds - b.timeSeconds).slice(0, 30);
+    const updated = [entry, ...list].sort((a, b) => b.score - a.score).slice(0, 30);
     localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(updated));
   } catch (err) {
     console.error('Failed to save leaderboard entry:', err);
@@ -143,8 +143,12 @@ export async function executeSpeedrunAttestation(
   saveTransactionRecord({
     signature,
     type: isAiAgent ? 'AI_AGENT_ATTESTATION' : 'SPEEDRUN_ATTESTATION',
-    title: `${isAiAgent ? '🤖 A.R.I.A. Autonomous AI' : '⚡ Runner Nova'} Speedrun Clear: Sector ${world}`,
-    description: `Completed in ${timeSeconds.toFixed(1)}s with ${coins} $SHARDs and ${score} pts. Cryptographically verified on Devnet!`,
+    title: world.includes('m')
+      ? `${isAiAgent ? '🤖 A.R.I.A. Copilot' : '⚡ Cyber Nova'} Sol-Jet Flight: ${world.replace('_RUN', '')}`
+      : `${isAiAgent ? '🤖 A.R.I.A. Autonomous AI' : '⚡ Runner Nova'} Speedrun: Sector ${world}`,
+    description: world.includes('m')
+      ? `Flew ${world.replace('_RUN', '')} in ${timeSeconds.toFixed(1)}s collecting ${coins} $SHARDs (${score.toLocaleString()} pts). Verified on Solana Devnet!`
+      : `Completed in ${timeSeconds.toFixed(1)}s with ${coins} $SHARDs and ${score} pts. Cryptographically verified on Devnet!`,
     solscanUrl,
     timestamp: Date.now(),
     status: 'CONFIRMED',

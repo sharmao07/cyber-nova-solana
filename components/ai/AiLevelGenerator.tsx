@@ -7,9 +7,11 @@ import {
   Play, 
   Cpu, 
   Flame, 
-  Cloud, 
   Gamepad2,
-  Check
+  Check,
+  Rocket,
+  Zap,
+  Radio
 } from 'lucide-react';
 
 interface AiLevelGeneratorProps {
@@ -17,14 +19,30 @@ interface AiLevelGeneratorProps {
 }
 
 const PRESET_PROMPTS = [
-  { label: '🔥 Brutal Lava Fortress', prompt: 'hardcore lava castle with fire obstacles, jumping pits and bowser boss' },
-  { label: '☁️ High-Altitude Skyway', prompt: 'high altitude sky level with springboards, trampolines and 25 floating coins' },
-  { label: '🕳️ Underground Mempool Rush', prompt: 'underground blue stone cave with piranha pipes and high coin caches' },
-  { label: '⚡ Speedrun Sprint', prompt: 'flat speedrun gauntlet with springboards and coin cascades for sub-30s speedrun' },
+  { 
+    label: '⚡ Quantum Grid Surge', 
+    prompt: 'Dense rotating zappers, vertical plasma barriers, and high-density shard formations',
+    icon: '⚡'
+  },
+  { 
+    label: '🚀 Seeker Missile Barrage', 
+    prompt: 'Rapid-fire tracking missiles with evasive corridors and supersonic warning times',
+    icon: '🚀'
+  },
+  { 
+    label: '🤖 Titan Vehicle Lab', 
+    prompt: 'Frequent Gravity Drifter, Mech Breaker, and Warp Cycle vehicle drops with long coin cascades',
+    icon: '🤖'
+  },
+  { 
+    label: '🌌 Supersonic Hyper-Cruise', 
+    prompt: 'High initial cruise velocity with wide zapper gaps designed for record distance flight attempts',
+    icon: '🌌'
+  },
 ];
 
 export default function AiLevelGenerator({ onGenerateAndPlay }: AiLevelGeneratorProps) {
-  const [prompt, setPrompt] = useState<string>('hardcore sky trampolines with lots of coins and 3 koopas');
+  const [prompt, setPrompt] = useState<string>('Dense rotating zappers with frequent Gravity Drifter drops and shard streams');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedSuccess, setGeneratedSuccess] = useState<boolean>(false);
 
@@ -52,17 +70,17 @@ export default function AiLevelGenerator({ onGenerateAndPlay }: AiLevelGenerator
         </div>
         <div>
           <h3 className="text-base font-black text-white tracking-wide">
-            AI LEVEL <span className="text-purple-400">ARCHITECT</span>
+            AI HAZARD & FLIGHT <span className="text-purple-400">ARCHITECT</span>
           </h3>
           <p className="text-[11px] text-zinc-400">
-            Generate Solvable, Balanced Mario Tilemaps from Natural Language Prompts
+            Synthesize Procedural Facility Waves & Threat Formations from Natural Language
           </p>
         </div>
       </div>
 
       {/* Preset Chips */}
       <div className="mb-4">
-        <div className="text-[11px] text-zinc-500 uppercase mb-2">Preset AI Blueprints</div>
+        <div className="text-[11px] text-zinc-500 uppercase mb-2">Preset AI Flight Parameters</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {PRESET_PROMPTS.map(p => (
             <button
@@ -73,43 +91,56 @@ export default function AiLevelGenerator({ onGenerateAndPlay }: AiLevelGenerator
               }}
               className="text-left p-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 transition hover:border-purple-500/50"
             >
-              <div className="font-bold text-white mb-0.5">{p.label}</div>
+              <div className="font-bold text-white mb-0.5 flex items-center gap-1.5">
+                <span>{p.icon}</span>
+                <span>{p.label}</span>
+              </div>
               <div className="text-[10px] text-zinc-500 line-clamp-1">{p.prompt}</div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Input Prompt Box */}
-      <div className="bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl mb-4">
-        <label className="block text-xs text-zinc-400 mb-2">
-          Natural Language Prompt (Describe Level Theme, Obstacles & Physics)
+      {/* Natural Language Prompt Input */}
+      <div className="space-y-2">
+        <label className="text-xs text-zinc-400 font-bold flex items-center gap-1.5">
+          <Cpu className="w-3.5 h-3.5 text-purple-400" />
+          <span>Describe Your Custom Facility Wave Parameters</span>
         </label>
         <textarea
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           rows={3}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 font-mono resize-none"
-          placeholder="e.g. Generate high sky trampolines with cloud bridges, 20 gold coins, and 2 koopas..."
+          placeholder="e.g. Extreme rotating zappers, dense homing missiles, and lots of floating Solana Shards..."
+          className="w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl p-3 text-xs text-white placeholder-zinc-600 outline-none transition resize-none"
         />
       </div>
 
-      {/* Compile & Play Button */}
-      <button
-        onClick={handleGenerate}
-        disabled={isGenerating || !prompt.trim()}
-        className="w-full bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-black py-3 rounded-xl font-mono text-xs transition shadow-lg shadow-purple-600/25 flex items-center justify-center gap-2 disabled:opacity-50"
-      >
-        <Sparkles className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
-        <span>{isGenerating ? 'Compiling AI Tilemap Matrix...' : 'Generate & Play AI Level'}</span>
-      </button>
-
-      {generatedSuccess && (
-        <div className="mt-3 p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl text-xs text-purple-300 flex items-center gap-2">
-          <Check className="w-4 h-4 text-purple-400 flex-shrink-0" />
-          <span>Level compiled successfully! Switched to AI Matrix level in the Play tab.</span>
+      {/* Action Button */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="text-[11px] text-zinc-500 flex items-center gap-1">
+          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+          <span>Compiles into 60 FPS procedural wave parameters</span>
         </div>
-      )}
+
+        <button
+          onClick={handleGenerate}
+          disabled={isGenerating || !prompt.trim()}
+          className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-purple-500/20 flex items-center gap-2"
+        >
+          {isGenerating ? (
+            <>
+              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Synthesizing Wave...</span>
+            </>
+          ) : (
+            <>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Synthesize & Launch Flight</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

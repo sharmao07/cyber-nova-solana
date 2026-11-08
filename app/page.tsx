@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/navbar/Header';
-import MarioGame from '@/components/mario/MarioGame';
+import JetpackGame from '@/components/jetpack/JetpackGame';
 import MushroomSwap from '@/components/defi/MushroomSwap';
 import StakingVault from '@/components/defi/StakingVault';
 import WagerEscrow from '@/components/defi/WagerEscrow';
@@ -100,7 +100,7 @@ export default function Home() {
             }`}
           >
             <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Arcade (60 FPS)</span>
+            <span>Endless Sol-Jet (60 FPS)</span>
           </button>
 
           <button
@@ -192,11 +192,10 @@ export default function Home() {
       {/* Main Tab Views */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         {activeTab === 'PLAY' && (
-          <MarioGame
+          <JetpackGame
             onCoinCollected={handleCoinCollected}
             stakingPerks={stakingPerks}
             activeSkin={activeSkin}
-            customLevelPrompt={customLevelPrompt}
             onTxConfirmed={() => setTransactions(getStoredTransactions())}
           />
         )}
