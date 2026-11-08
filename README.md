@@ -172,4 +172,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📄 License
 
-MIT License — Built with pride for the **MLH Solana Hackathon 2026**.
+MIT License 
