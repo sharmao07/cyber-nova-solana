@@ -10,7 +10,8 @@ import {
   LabScientistNPC, 
   JetpackParticle, 
   ScorePopup, 
-  StakingPerks 
+  StakingPerks,
+  DifficultyMode
 } from './types';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, FLOOR_Y, CEILING_Y } from './sprites';
 import { sounds } from '@/lib/audio/sound-effects';
@@ -46,7 +47,8 @@ export function updateJetpackPhysics(
   scorePopups: ScorePopup[],
   perks: StakingPerks,
   globalFrame: number,
-  isPracticeMode: boolean
+  isPracticeMode: boolean,
+  difficulty: DifficultyMode = 'MEDIUM'
 ): PhysicsTickOutput {
   const output: PhysicsTickOutput = {
     shardsGained: 0,
@@ -64,7 +66,7 @@ export function updateJetpackPhysics(
     player.invincibleTimer = Math.max(player.invincibleTimer, 30);
   }
 
-  // 2. Handle Death State
+  // 2. Handle Death State (Fixed: clears isDying once triggered so modal closes cleanly!)
   if (player.isDying) {
     player.deathTimer--;
     player.vy += 0.45;
@@ -74,6 +76,8 @@ export function updateJetpackPhysics(
       player.vy = 0;
     }
     if (player.deathTimer <= 0) {
+      player.isDying = false;
+      player.deathTimer = 0;
       output.playerCrashed = true;
     }
     return output;
@@ -96,15 +100,22 @@ export function updateJetpackPhysics(
     output.warpActive = true;
   }
 
-  // 5. Dynamic Speed Scaling with Distance + Warp Boost
-  let baseScrollSpeed = 5.6 + Math.min(6.4, player.distance / 320);
+  // 5. Dynamic Speed Scaling with Distance, Difficulty + Warp Boost
+  let baseScrollSpeed = 
+    difficulty === 'EASY' 
+      ? 4.2 + Math.min(4.2, player.distance / 500)
+      : difficulty === 'HARD'
+      ? 6.8 + Math.min(7.5, player.distance / 240)
+      : 5.5 + Math.min(6.2, player.distance / 320);
+
   if (isWarping) baseScrollSpeed *= 1.55;
   const scrollSpeed = baseScrollSpeed;
 
   const prevDist = player.distance;
   player.distance += scrollSpeed * 0.06;
-  const mult = player.combo >= 15 ? 4 : player.combo >= 8 ? 3 : player.combo >= 4 ? 2 : 1;
-  output.scoreGained += Math.round(scrollSpeed * 0.25 * mult);
+  const comboMult = player.combo >= 15 ? 4 : player.combo >= 8 ? 3 : player.combo >= 4 ? 2 : 1;
+  const diffMult = difficulty === 'HARD' ? 1.8 : difficulty === 'EASY' ? 1.0 : 1.25;
+  output.scoreGained += Math.round(scrollSpeed * 0.25 * comboMult * diffMult);
 
   // Checkpoint Milestones every 250m
   const cur250 = Math.floor(player.distance / 250);
@@ -560,7 +571,7 @@ export function updateJetpackPhysics(
   }
 
   // 16. Procedural Wave Generation (Obstacles, Shards, Vehicles, Speed Gates)
-  spawnProceduralElements(player, obstacles, shards, vehicleTokens, speedGates, scientists, globalFrame);
+  spawnProceduralElements(player, obstacles, shards, vehicleTokens, speedGates, scientists, globalFrame, difficulty);
 
   return output;
 }
@@ -585,13 +596,17 @@ function spawnProceduralElements(
   vehicleTokens: VehicleTokenEntity[],
   speedGates: SpeedGateEntity[],
   scientists: LabScientistNPC[],
-  globalFrame: number
+  globalFrame: number,
+  difficulty: DifficultyMode = 'MEDIUM'
 ) {
   const maxObstacleX = obstacles.reduce((max, o) => Math.max(max, o.x), 0);
 
   if (maxObstacleX < CANVAS_WIDTH + 240) {
     const spawnX = Math.max(CANVAS_WIDTH + 100, maxObstacleX + 180 + Math.random() * 120);
     const pattern = Math.floor(Math.random() * 6);
+
+    const rotSpeed = difficulty === 'EASY' ? 0.022 : difficulty === 'HARD' ? 0.046 : 0.032;
+    const warningTimer = difficulty === 'EASY' ? 75 : difficulty === 'HARD' ? 36 : 55;
 
     if (pattern === 0) {
       // Horizontal Zapper at varied height
@@ -628,7 +643,7 @@ function spawnProceduralElements(
         w: 90,
         h: 90,
         angle: 0,
-        rotSpeed: 0.032,
+        rotSpeed,
         active: true,
       });
     } else if (pattern === 3) {
@@ -640,7 +655,7 @@ function spawnProceduralElements(
         y: player.y,
         w: 28,
         h: 16,
-        warningTimer: 55,
+        warningTimer,
         trackingY: player.y,
         launched: false,
         active: true,

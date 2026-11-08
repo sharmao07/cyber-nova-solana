@@ -5,6 +5,8 @@ export type VehicleType = 'none' | 'gravity_drifter' | 'mech_breaker' | 'warp_cy
 
 export type SkinType = 'classic' | 'fire' | 'gold' | 'shadow';
 
+export type DifficultyMode = 'EASY' | 'MEDIUM' | 'HARD';
+
 export interface JetpackPlayer {
   x: number;
   y: number;

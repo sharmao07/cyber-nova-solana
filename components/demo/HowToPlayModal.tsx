@@ -14,7 +14,8 @@ import {
   Coins,
   Rocket,
   Shield,
-  Radio
+  Radio,
+  SlidersHorizontal
 } from 'lucide-react';
 
 interface HowToPlayModalProps {
@@ -181,6 +182,28 @@ export default function HowToPlayModal({
                 </div>
                 <div className="text-[11px]">
                   <strong className="text-cyan-300">Touch & Mobile Ready:</strong> Tap and hold anywhere on the screen or arcade window on mobile browsers to engage thrust. Zero lag, 60 FPS requestAnimationFrame loop!
+                </div>
+              </div>
+
+              {/* Difficulty Modes */}
+              <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl">
+                <div className="font-bold text-white mb-2 flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>3 Selectable Flight Difficulty Modes</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                  <div className="p-2 bg-zinc-950 border border-emerald-500/30 rounded-lg">
+                    <strong className="text-emerald-400 block mb-0.5">🟢 Cadet (Easy)</strong>
+                    <span className="text-zinc-400">Slower starting speed, wider zapper clearance gaps, 1.3s missile warning, and starts with +1 free shield!</span>
+                  </div>
+                  <div className="p-2 bg-zinc-950 border border-amber-500/30 rounded-lg">
+                    <strong className="text-amber-400 block mb-0.5">🟡 Pilot (Medium)</strong>
+                    <span className="text-zinc-400">Balanced speed, standard zapper gaps, rotating obstacles, and 1.25x score multiplier.</span>
+                  </div>
+                  <div className="p-2 bg-zinc-950 border border-red-500/30 rounded-lg">
+                    <strong className="text-red-400 block mb-0.5">🔴 Apex (Hard)</strong>
+                    <span className="text-zinc-400">High cruise velocity, rapid-fire missiles (0.6s warning), 1.8x score multiplier & extra shards!</span>
+                  </div>
                 </div>
               </div>
             </div>

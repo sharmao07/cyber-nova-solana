@@ -12,7 +12,8 @@ import {
   JetpackParticle, 
   ScorePopup, 
   StakingPerks,
-  SkinType
+  SkinType,
+  DifficultyMode
 } from '@/lib/jetpack/types';
 import { 
   drawJetpackPlayer, 
@@ -49,7 +50,9 @@ import {
   Radio,
   CheckCircle2,
   Sparkles,
-  Layers
+  Layers,
+  X,
+  SlidersHorizontal
 } from 'lucide-react';
 import HowToPlayModal from '@/components/demo/HowToPlayModal';
 import DevnetDeployModal from '@/components/beginner/DevnetDeployModal';
@@ -76,6 +79,7 @@ export default function JetpackGame({
   const [score, setScore] = useState<number>(0);
   const [combo, setCombo] = useState<number>(0);
   const [isWarping, setIsWarping] = useState<boolean>(false);
+  const [difficulty, setDifficulty] = useState<DifficultyMode>('MEDIUM');
   const [isAiAutopilot, setIsAiAutopilot] = useState<boolean>(false);
   const [aiTelemetry, setAiTelemetry] = useState<AiTelemetry | null>(null);
   const [isPracticeMode, setIsPracticeMode] = useState<boolean>(false);
@@ -162,7 +166,7 @@ export default function JetpackGame({
     gs.player.onCeiling = false;
     gs.player.vehicle = 'none';
     gs.player.gravityInverted = false;
-    gs.player.shields = stakingPerks.superJump ? 1 : 0;
+    gs.player.shields = (stakingPerks.superJump ? 1 : 0) + (difficulty === 'EASY' ? 1 : 0);
     gs.player.distance = 0;
     gs.player.shards = 0;
     gs.player.score = 0;
@@ -187,7 +191,13 @@ export default function JetpackGame({
     setScore(0);
     setCombo(0);
     setIsWarping(false);
-  }, [activeSkin, stakingPerks]);
+  }, [activeSkin, stakingPerks, difficulty]);
+
+  // Clean Modal Close Handler (Fixes: Click Close Nothing Happens)
+  const handleCloseModal = useCallback(() => {
+    setShowCrashModal(false);
+    resetGame();
+  }, [resetGame]);
 
   // Input Listeners (Keyboard & Mouse / Touch)
   useEffect(() => {
@@ -253,7 +263,7 @@ export default function JetpackGame({
         setIsThrustActive(active);
       }
 
-      // Physics tick
+      // Physics tick with dynamic difficulty
       const out = updateJetpackPhysics(
         gs.player,
         gs.obstacles,
@@ -265,7 +275,8 @@ export default function JetpackGame({
         gs.scorePopups,
         stakingPerks,
         gs.globalFrame,
-        isPracticeMode
+        isPracticeMode,
+        difficulty
       );
 
       if (out.screenShake > 0) {
@@ -303,7 +314,7 @@ export default function JetpackGame({
           score: score + out.scoreGained,
         });
         setShowCrashModal(true);
-        if (curDistance > 800) {
+        if (curDistance > 600) {
           confetti({
             particleCount: 80,
             spread: 70,
@@ -318,7 +329,7 @@ export default function JetpackGame({
 
     animId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animId);
-  }, [isPaused, showCrashModal, isAiAutopilot, isPracticeMode, stakingPerks, bestDistance, shards, score, onCoinCollected]);
+  }, [isPaused, showCrashModal, isAiAutopilot, isPracticeMode, stakingPerks, bestDistance, shards, score, difficulty, onCoinCollected]);
 
   const renderFrame = (
     ctx: CanvasRenderingContext2D,
@@ -404,7 +415,7 @@ export default function JetpackGame({
       // Attest distance run to Solana Devnet
       const sig = await executeSpeedrunAttestation(
         keypair,
-        `${runSummary.distance}m_RUN`,
+        `${runSummary.distance}m_${difficulty}_RUN`,
         Math.round(runSummary.distance / 10),
         runSummary.shards,
         runSummary.score,
@@ -428,12 +439,12 @@ export default function JetpackGame({
     <div className="w-full flex flex-col items-center font-mono">
       {/* Sleek Arcade Cabinet Frame */}
       <div className="w-full max-w-4xl bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden">
-        {/* Top Flight HUD Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 bg-zinc-900/60 border border-zinc-800/80 px-4 py-2.5 rounded-xl text-xs text-white">
-          <div className="flex items-center gap-5 sm:gap-7">
+        {/* Top Flight HUD Bar with Difficulty Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 bg-zinc-900/60 border border-zinc-800/80 px-4 py-2 rounded-xl text-xs text-white">
+          <div className="flex items-center gap-4 sm:gap-6">
             <div>
               <div className="text-[10px] text-zinc-500 font-medium">Distance</div>
-              <div className="font-bold text-cyan-400 text-sm tabular-nums flex items-center gap-1">
+              <div className="font-bold text-cyan-400 text-sm tabular-nums flex items-center gap-0.5">
                 <span>{distance}</span>
                 <span className="text-[10px] text-zinc-400">m</span>
               </div>
@@ -456,38 +467,58 @@ export default function JetpackGame({
 
             {/* Live Combo Badge */}
             {combo >= 4 && (
-              <div className="animate-bounce">
+              <div className="hidden sm:block animate-bounce">
                 <span className="text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-purple-400" />
-                  <span>COMBO x{combo >= 15 ? 4 : combo >= 8 ? 3 : 2}</span>
+                  <span>x{combo >= 15 ? 4 : combo >= 8 ? 3 : 2}</span>
                 </span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Milestone mini-meter */}
-            <div className="hidden sm:block text-right">
-              <div className="text-[10px] text-zinc-500">Next: {nextMilestone}m</div>
-              <div className="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-0.5">
-                <div 
-                  className="h-full bg-cyan-400 transition-all duration-200" 
-                  style={{ width: `${milestoneProgress}%` }}
-                />
-              </div>
-            </div>
+          {/* Difficulty Selector (Requested: Easy, Medium, Hard Mode) */}
+          <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/80 text-xs">
+            <button
+              onClick={() => { setDifficulty('EASY'); resetGame(); }}
+              title="Cadet Recon: Slower speed, wider clearance, +1 bonus shield"
+              className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-[11px] ${
+                difficulty === 'EASY'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>Easy</span>
+              <span className="text-[9px] text-zinc-500">1x</span>
+            </button>
 
-            {isPracticeMode ? (
-              <span className="text-[11px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                Practice Mode
-              </span>
-            ) : (
-              <div className="hidden md:flex items-center gap-1 text-[11px] text-emerald-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                {stakingPerks.shardMagnet && <span title="Shard Magnetism">🧲 Magnet</span>}
-                {stakingPerks.superJump && <span title="Kinetic Shield Active">🛡️ Shield</span>}
-                {!stakingPerks.shardMagnet && !stakingPerks.superJump && <span className="text-zinc-500">No Buffs</span>}
-              </div>
-            )}
+            <button
+              onClick={() => { setDifficulty('MEDIUM'); resetGame(); }}
+              title="Cyber Pilot: Balanced speed and hazards, 1.25x score"
+              className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-[11px] ${
+                difficulty === 'MEDIUM'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span>Medium</span>
+              <span className="text-[9px] text-zinc-500">1.25x</span>
+            </button>
+
+            <button
+              onClick={() => { setDifficulty('HARD'); resetGame(); }}
+              title="Apex Velocity: Fast cruise, aggressive missiles, 1.8x score & extra shards"
+              className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1.5 text-[11px] ${
+                difficulty === 'HARD'
+                  ? 'bg-red-500/20 text-red-300 border border-red-500/50 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+              <span>Hard</span>
+              <span className="text-[9px] text-zinc-500">1.8x</span>
+            </button>
           </div>
         </div>
 
@@ -534,7 +565,7 @@ export default function JetpackGame({
             <div className="absolute top-3 left-3 bg-zinc-950/90 border border-cyan-500/40 backdrop-blur-md px-3 py-2 rounded-lg text-[11px] shadow-lg max-w-sm pointer-events-none z-10">
               <div className="flex items-center gap-2 text-cyan-400 font-bold mb-1">
                 <Bot className="w-3.5 h-3.5" />
-                <span>A.R.I.A. JETPACK COPILOT</span>
+                <span>A.R.I.A. COPILOT ({difficulty})</span>
                 <span className="text-[9px] bg-cyan-500/20 px-1.5 py-0.2 rounded text-cyan-300">
                   {Math.round(aiTelemetry.confidence * 100)}% Conf
                 </span>
@@ -558,7 +589,7 @@ export default function JetpackGame({
           )}
         </div>
 
-        {/* Prominent Primary Touch / Click Flight Pad (Requested: Show Controls Below Window) */}
+        {/* Primary Touch / Click Flight Pad (Controls Below Game Window) */}
         <div className="mt-3">
           <button
             onMouseDown={() => { gameStateRef.current.touchPointerDown = true; }}
@@ -576,7 +607,7 @@ export default function JetpackGame({
           </button>
         </div>
 
-        {/* Detailed Keyboard & Gameplay Controls Bar Below Game Window */}
+        {/* Clean Controls Guide Below Game Window */}
         <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <div className="bg-zinc-900/60 border border-zinc-800/80 p-2.5 rounded-xl">
             <div className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Ascend / Thrust</div>
@@ -600,13 +631,13 @@ export default function JetpackGame({
             <div className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Cyber Vehicles</div>
             <div className="text-zinc-200 flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 rounded text-purple-400 font-bold text-[11px]">TAP</kbd>
-              <span className="text-[11px] text-zinc-300">Gravity Drifter</span>
+              <span className="text-[11px] text-zinc-300">Drifter</span>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1">Absorbs 1 hit (Eject Armor)</div>
+            <div className="text-[10px] text-zinc-500 mt-1">Eject armor absorbs 1 hit</div>
           </div>
 
           <div className="bg-zinc-900/60 border border-zinc-800/80 p-2.5 rounded-xl">
-            <div className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Pause / Reset</div>
+            <div className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Pause / Guide</div>
             <div className="text-zinc-200 flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 rounded text-amber-400 font-bold text-[11px]">P</kbd>
               <span className="text-zinc-500">/</span>
@@ -616,7 +647,7 @@ export default function JetpackGame({
           </div>
         </div>
 
-        {/* Quick Toggles & Utilities Row */}
+        {/* Clean Utilities Row */}
         <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 bg-zinc-900/40 border border-zinc-800/60 p-2 rounded-xl text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -680,10 +711,19 @@ export default function JetpackGame({
         </div>
       </div>
 
-      {/* Flight Crash Modal with Solana Speedrun Attestation */}
+      {/* Flight Crash Modal with Solana Speedrun Attestation (Fixed: Close Closes Modal & Resets Cleanly) */}
       {showCrashModal && runSummary && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-mono animate-in fade-in duration-150">
           <div className="bg-zinc-900 border-2 border-red-500/60 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative text-white">
+            {/* Top Right Close 'X' Button */}
+            <button
+              onClick={handleCloseModal}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition"
+              title="Close and Reset Flight"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
             <div className="w-14 h-14 bg-red-500/20 border border-red-500/40 rounded-full mx-auto flex items-center justify-center text-2xl mb-3">
               ⚡
             </div>
@@ -699,6 +739,7 @@ export default function JetpackGame({
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase">Distance</div>
                 <div className="text-base font-bold text-cyan-400">{runSummary.distance}m</div>
+                <div className="text-[9px] text-zinc-500 capitalize">{difficulty.toLowerCase()} Mode</div>
               </div>
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase">Shards</div>
@@ -706,10 +747,12 @@ export default function JetpackGame({
                   <Zap className="w-3.5 h-3.5 text-emerald-400" />
                   <span>+{runSummary.shards}</span>
                 </div>
+                <div className="text-[9px] text-zinc-500">Banked</div>
               </div>
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase">Score</div>
                 <div className="text-base font-bold text-white">{runSummary.score.toLocaleString()}</div>
+                <div className="text-[9px] text-zinc-500">{difficulty === 'HARD' ? '1.8x Apex' : difficulty === 'MEDIUM' ? '1.25x' : '1.0x'}</div>
               </div>
             </div>
 
@@ -764,7 +807,7 @@ export default function JetpackGame({
               </button>
 
               <button
-                onClick={() => setShowCrashModal(false)}
+                onClick={handleCloseModal}
                 className="px-4 py-2.5 bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs transition"
               >
                 Close
