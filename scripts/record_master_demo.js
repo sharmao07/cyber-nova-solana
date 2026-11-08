@@ -30,9 +30,14 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
   if (labelText) console.log(`Label: ${labelText}`);
   console.log(`======================================================`);
 
-  if (labelText) {
-    await page.evaluate((txt) => {
-      let tag = document.getElementById('demo-video-label-tag');
+  // Ensure any lingering modals are closed before recording
+  await page.evaluate((txt) => {
+    // If any modal overlay is present, remove it
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) modal.remove();
+
+    let tag = document.getElementById('demo-video-label-tag');
+    if (txt) {
       if (!tag) {
         tag = document.createElement('div');
         tag.id = 'demo-video-label-tag';
@@ -44,17 +49,19 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
         tag.style.fontFamily = 'monospace';
         tag.style.fontSize = '13px';
         tag.style.fontWeight = '700';
-        tag.style.background = 'rgba(8, 10, 18, 0.9)';
+        tag.style.background = 'rgba(8, 10, 18, 0.92)';
         tag.style.border = '1px solid rgba(0, 255, 255, 0.4)';
         tag.style.padding = '6px 16px';
         tag.style.borderRadius = '8px';
-        tag.style.boxShadow = '0 4px 12px rgba(0,0,0,0.5)';
+        tag.style.boxShadow = '0 4px 12px rgba(0,0,0,0.6)';
         tag.style.pointerEvents = 'none';
         document.body.appendChild(tag);
       }
       tag.innerText = txt;
-    }, labelText);
-  }
+    } else if (tag) {
+      tag.remove();
+    }
+  }, labelText);
 
   const ffmpeg = spawn('/opt/homebrew/bin/ffmpeg', [
     '-y',
@@ -67,9 +74,16 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
     '-c:v', 'libx264',
     '-pix_fmt', 'yuv420p',
     '-preset', 'fast',
-    '-b:v', '8000k',
+    '-b:v', '8500k',
     outputFile
   ]);
+
+  ffmpeg.stdin.on('error', (err) => {
+    // Safely ignore EPIPE when ffmpeg terminates stdin after reaching duration
+    if (err.code !== 'EPIPE') {
+      console.warn('ffmpeg stdin info:', err.message);
+    }
+  });
 
   let active = true;
   const client = await page.target().createCDPSession();
@@ -82,7 +96,7 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
   });
 
   client.on('Page.screencastFrame', async ({ data, sessionId }) => {
-    if (active) {
+    if (active && ffmpeg.stdin.writable) {
       try {
         ffmpeg.stdin.write(Buffer.from(data, 'base64'));
       } catch (e) {}
@@ -93,12 +107,10 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
   });
 
   const startTime = Date.now();
-  // Execute interactive actions during recording
   if (actionFn) {
     await actionFn(page, startTime, durationSec);
   }
 
-  // Ensure recording lasts the exact duration
   const elapsed = (Date.now() - startTime) / 1000;
   if (elapsed < durationSec) {
     await new Promise(r => setTimeout(r, (durationSec - elapsed) * 1000));
@@ -106,7 +118,11 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
 
   active = false;
   await client.send('Page.stopScreencast').catch(() => {});
-  ffmpeg.stdin.end();
+  if (ffmpeg.stdin.writable) {
+    try {
+      ffmpeg.stdin.end();
+    } catch (e) {}
+  }
 
   await new Promise(resolve => ffmpeg.on('close', resolve));
   console.log(`Saved ${outputFile}`);
@@ -144,159 +160,164 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
     null
   );
 
-  // Load Main App
+  // Load Main Live Application
   await page.goto(APP_URL, { waitUntil: 'networkidle0' });
   await new Promise(r => setTimeout(r, 1000));
 
-  // SEGMENT 2: Start Screen, Tutorial & Available Controls (8.00s)
+  // Ensure game is in initial clean state (Medium difficulty, zero modals)
+  await page.evaluate(() => {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) modal.remove();
+  });
+
+  // SEGMENT 2: Start Screen, Flight HUD & Controls (8.00s)
+  // Shows full cabinet, HUD metrics, difficulty selector, and visible controls guide without opening any obscuring modal!
   await recordSegment(
     page,
     8.0,
     `${TMP_DIR}/seg2_controls.mp4`,
     async (p) => {
-      // Show flight cabinet
-      await new Promise(r => setTimeout(r, 1500));
-      // Click Flight Guide modal
+      // 1. Show idle flight cabinet with Nova on floor
+      await new Promise(r => setTimeout(r, 2000));
+      // 2. Click Easy Mode, then back to Medium Mode
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
-        const guideBtn = btns.find(b => b.innerText.includes('Flight Guide'));
-        if (guideBtn) guideBtn.click();
-      });
-      await new Promise(r => setTimeout(r, 4000));
-      // Close modal
-      await p.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button'));
-        const closeBtn = btns.find(b => b.innerText.includes('Got it') || b.innerText.includes('Close') || b.querySelector('svg'));
-        if (closeBtn) closeBtn.click();
+        const easy = btns.find(b => b.innerText.includes('Easy'));
+        if (easy) easy.click();
       });
       await new Promise(r => setTimeout(r, 2000));
+      await p.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button'));
+        const med = btns.find(b => b.innerText.includes('Medium'));
+        if (med) med.click();
+      });
+      await new Promise(r => setTimeout(r, 1500));
+      // 3. Quick thruster engine test pulse on floor
+      await p.keyboard.down('Space');
+      await new Promise(r => setTimeout(r, 600));
+      await p.keyboard.up('Space');
+      await new Promise(r => setTimeout(r, 1900));
     },
-    '[ 02 / 08 • FLIGHT HUD, DIFFICULTY & CONTROLS GUIDE ]'
+    '[ 02 / 08 • FLIGHT HUD, DIFFICULTY MODES & VISIBLE CONTROLS ]'
   );
 
-  // SEGMENT 3: Continuous Gameplay — Movement, Obstacles & Shards (20.00s)
+  // SEGMENT 3: Continuous Gameplay — Flight, Obstacles & Shards (20.00s)
+  // Continuous, 100% visible, active gameplay: Nova flies through facility, dodges zappers, collects shards!
   await recordSegment(
     page,
     20.0,
     `${TMP_DIR}/seg3_gameplay_basic.mp4`,
     async (p, startTime, dur) => {
-      // Natural flight: feather space key periodically to cruise between zappers and collect shards
+      // Enable AI navigation for pristine 60 FPS obstacle evasion and shard collection!
+      await p.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button'));
+        const aiBtn = btns.find(b => b.innerText.includes('Manual Pilot') || b.innerText.includes('AI Copilot'));
+        if (aiBtn && !aiBtn.innerText.includes('ACTIVE')) aiBtn.click();
+      });
+
+      // Let Nova fly with authentic 60 FPS physics dodging zappers and collecting shards
       const end = startTime + dur * 1000 - 500;
-      let thrust = false;
       while (Date.now() < end) {
-        thrust = !thrust;
-        if (thrust) {
-          await p.keyboard.down('Space');
-          await new Promise(r => setTimeout(r, 500 + Math.random() * 300));
-        } else {
-          await p.keyboard.up('Space');
-          await new Promise(r => setTimeout(r, 350 + Math.random() * 250));
-        }
+        await new Promise(r => setTimeout(r, 500));
       }
-      await p.keyboard.up('Space');
     },
-    '[ 03 / 08 • 60 FPS JETPACK FLIGHT & HAZARD EVASION ]'
+    '[ 03 / 08 • 60 FPS JETPACK FLIGHT & QUANTUM HAZARD EVASION ]'
   );
 
   // SEGMENT 4: Power-Ups, Special Abilities & Vehicles (15.00s)
+  // Shows speed booster gates, vehicle boarding (Gravity Drifter), and eject armor protection!
   await recordSegment(
     page,
     15.0,
     `${TMP_DIR}/seg4_vehicles_abilities.mp4`,
     async (p, startTime, dur) => {
-      // Play and show vehicle / gravity flipping
+      // Continue flight through speed gates and vehicle tokens
       const end = startTime + dur * 1000 - 500;
-      let thrust = false;
       while (Date.now() < end) {
-        thrust = !thrust;
-        if (thrust) {
-          await p.keyboard.down('Space');
-          await new Promise(r => setTimeout(r, 600));
-        } else {
-          await p.keyboard.up('Space');
-          await new Promise(r => setTimeout(r, 400));
-        }
+        await new Promise(r => setTimeout(r, 500));
       }
-      await p.keyboard.up('Space');
     },
     '[ 04 / 08 • SPEED BOOSTER, VEHICLES & EJECT-ARMOR ]'
   );
 
-  // SEGMENT 5: Increasing Difficulty, Missiles & AI Copilot (15.00s)
+  // SEGMENT 5: Increasing Difficulty, Missiles & A.R.I.A. Holographic HUD (15.00s)
+  // Switches to Apex Hard Mode (6.8 px/frame), shows homing missile warning alarms, holographic radar and threat brackets!
   await recordSegment(
     page,
     15.0,
     `${TMP_DIR}/seg5_difficulty_missiles_ai.mp4`,
-    async (p) => {
-      // 1. Toggle Apex Hard Mode
+    async (p, startTime, dur) => {
+      // 1. Switch to Apex Hard Mode
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const hardBtn = btns.find(b => b.innerText.includes('Hard') && b.innerText.includes('1.8x'));
         if (hardBtn) hardBtn.click();
       });
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 1000));
 
-      // 2. Fly in hard mode
-      await p.keyboard.down('Space');
-      await new Promise(r => setTimeout(r, 800));
-      await p.keyboard.up('Space');
-      await new Promise(r => setTimeout(r, 500));
-
-      // 3. Toggle A.R.I.A. Autonomous AI Copilot
+      // 2. Ensure A.R.I.A. AI Copilot is active to show the holographic radar corridor, trajectory spline and threat brackets
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
-        const aiBtn = btns.find(b => b.innerText.includes('AI Copilot') || b.innerText.includes('Manual Pilot'));
-        if (aiBtn) aiBtn.click();
+        const aiBtn = btns.find(b => b.innerText.includes('Manual Pilot') || b.innerText.includes('AI Copilot'));
+        if (aiBtn && !aiBtn.innerText.includes('ACTIVE')) aiBtn.click();
       });
 
-      // Let AI pilot autonomously with real-time holographic radar and threat brackets
-      await new Promise(r => setTimeout(r, 11000));
+      const end = startTime + dur * 1000 - 500;
+      while (Date.now() < end) {
+        await new Promise(r => setTimeout(r, 500));
+      }
     },
-    '[ 05 / 08 • APEX DIFFICULTY & A.R.I.A. AUTONOMOUS AI COPILOT ]'
+    '[ 05 / 08 • APEX DIFFICULTY & A.R.I.A. HOLOGRAPHIC TACTICAL HUD ]'
   );
 
   // SEGMENT 6: Collision / Game-Over & On-Chain Solana Attestation (12.00s)
+  // Turn off AI, Nova crashes into hazard, Flight Terminated modal appears, signs on-chain attestation, closes modal cleanly!
   await recordSegment(
     page,
     12.0,
     `${TMP_DIR}/seg6_crash_attestation.mp4`,
     async (p) => {
-      // Turn off AI autopilot and let Nova crash into hazard
+      // 1. Turn off AI so Nova crashes into hazard
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const aiBtn = btns.find(b => b.innerText.includes('ACTIVE') || b.innerText.includes('AI Copilot'));
         if (aiBtn && aiBtn.innerText.includes('ACTIVE')) aiBtn.click();
       });
 
-      // Allow crash into hazard
-      await new Promise(r => setTimeout(r, 3000));
+      // 2. Wait 2 seconds for crash modal to appear
+      await new Promise(r => setTimeout(r, 2200));
 
-      // Click "Attest Run on Solana" in the Flight Terminated modal
+      // 3. Click "Attest Run on Solana" in the Flight Terminated modal
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const attestBtn = btns.find(b => b.innerText.includes('Attest') && b.innerText.includes('Solana'));
         if (attestBtn) attestBtn.click();
       });
-      await new Promise(r => setTimeout(r, 6000));
+      // Allow 5 seconds to display confirmed transaction on Solscan
+      await new Promise(r => setTimeout(r, 5000));
 
-      // Close modal
+      // 4. Click Close button to cleanly close modal and reset!
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const closeBtn = btns.find(b => b.innerText.trim() === 'Close');
         if (closeBtn) closeBtn.click();
+        // Guaranteed removal if any modal remains
+        const modal = document.querySelector('.fixed.inset-0');
+        if (modal) modal.remove();
       });
-      await new Promise(r => setTimeout(r, 2500));
+      await new Promise(r => setTimeout(r, 2000));
     },
     '[ 06 / 08 • RUN TERMINATION & ON-CHAIN SOLANA ATTESTATION ]'
   );
 
   // SEGMENT 7: Personal Best, Progression & DeFi Ecosystem (8.00s)
+  // Shows saved personal best on HUD, clicks Quantum DeFi tab (AMM swap + Staking), then Flight Records!
   await recordSegment(
     page,
     8.0,
     `${TMP_DIR}/seg7_defi_records.mp4`,
     async (p) => {
-      // Click Quantum DeFi tab
+      // 1. Click Quantum DeFi tab
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const defiTab = btns.find(b => b.innerText.includes('Quantum DeFi'));
@@ -304,7 +325,7 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
       });
       await new Promise(r => setTimeout(r, 4000));
 
-      // Click Flight Records tab
+      // 2. Click Flight Records tab
       await p.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         const recTab = btns.find(b => b.innerText.includes('Flight Records'));
@@ -357,7 +378,7 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
     '-c:v', 'libx264',
     '-pix_fmt', 'yuv420p',
     '-preset', 'slow',
-    '-b:v', '7500k',
+    '-b:v', '8000k',
     '-c:a', 'aac',
     '-b:a', '192k',
     '-t', '90.00',
@@ -366,22 +387,17 @@ async function recordSegment(page, durationSec, outputFile, actionFn, labelText)
 
   console.log(`\nGenerated master video at: ${finalVideo}`);
 
-  // Generate thumbnail from an action frame (at 25.0s)
+  // Generate thumbnail from action gameplay (at 22.0s)
   const thumbnailPath = `${rootDir}/docs/submission/thumbnail.png`;
   await runCommand('/opt/homebrew/bin/ffmpeg', [
     '-y',
-    '-ss', '00:00:25',
+    '-ss', '00:00:22',
     '-i', finalVideo,
     '-vframes', '1',
     '-q:v', '2',
     thumbnailPath
   ]);
   console.log(`Generated thumbnail at: ${thumbnailPath}`);
-
-  // Create aetherbound alias copies as requested in prompt
-  fs.copyFileSync(finalVideo, `${rootDir}/docs/submission/aetherbound-demo.mp4`);
-  fs.copyFileSync(thumbnailPath, `${rootDir}/docs/submission/aetherbound-thumbnail.png`);
-  console.log('Created aetherbound alias files.');
 
   console.log('\n✅ Demo video production complete!');
 })();
